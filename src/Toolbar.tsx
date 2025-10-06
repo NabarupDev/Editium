@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSlate } from 'slate-react';
 import { HistoryEditor } from 'slate-history';
+import { Editor, Transforms, Range } from 'slate';
 import {
   BoldIcon,
   ItalicIcon,
@@ -14,14 +15,35 @@ import {
   ArrowLeftIcon,
   Bars3CenterLeftIcon,
   Bars3Icon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  PencilIcon,
+  TrashIcon,
+  ArrowTopRightOnSquareIcon,
+  PhotoIcon,
+  TableCellsIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon
 } from '@heroicons/react/24/outline';
-import { isMarkActive, isBlockActive, toggleMark, toggleBlock, isLinkActive, insertLink, unwrapLink, isAlignmentActive, toggleAlignment, indentListItem, outdentListItem } from './utils';
-import { FormatType, BlockType, ToolbarItem, AlignmentType } from './types';
+import { isMarkActive, isBlockActive, toggleMark, toggleBlock, isLinkActive, insertLink, unwrapLink, isAlignmentActive, toggleAlignment, indentListItem, outdentListItem, getLinkAtCursor, insertHorizontalRule, applyColor, applyBackgroundColor, getActiveColor, getActiveBackgroundColor, insertImage, isValidImageUrl, insertTable, addTableRow, removeTableRow, addTableColumn, removeTableColumn, isInTable, findAllMatches, navigateToMatch, replaceMatch, replaceAllMatches } from './utils';
+import { FormatType, BlockType, ToolbarItem, AlignmentType, LinkElement, ImageElement } from './types';
 
 interface ToolbarProps {
   items: ToolbarItem[];
   className?: string;
+  onViewOutput?: (type: 'html' | 'json') => void;
+  onEditLink?: (linkData: { url: string; title?: string; target?: '_blank' | '_self'; text: string }) => void;
+  searchQuery?: string;
+  searchMatches?: Array<{ path: any; offset: number; text: string }>;
+  currentMatchIndex?: number;
+  onSearchQueryChange?: (query: string) => void;
+  onSearchMatchesChange?: (matches: Array<{ path: any; offset: number; text: string }>) => void;
+  onCurrentMatchIndexChange?: (index: number) => void;
+  isFullscreen?: boolean;
+  onFullscreenToggle?: () => void;
 }
 
 interface ToolbarButtonProps {
@@ -61,33 +83,31 @@ const Dropdown: React.FC<DropdownProps> = ({ trigger, children, title }) => {
           setIsOpen(!isOpen);
         }}
         style={{
-          backgroundColor: isOpen ? '#3b82f6' : '#ffffff',
-          border: isOpen ? '1px solid #3b82f6' : '1px solid #d1d5db',
-          borderRadius: '6px',
-          padding: '8px 12px',
-          margin: '2px',
+          backgroundColor: isOpen ? '#dee2e6' : 'transparent',
+          border: 'none',
+          borderRadius: '3px',
+          padding: '5px 8px',
+          margin: '0',
           cursor: 'pointer',
-          fontSize: '13px',
-          fontWeight: '500',
-          color: isOpen ? '#ffffff' : '#374151',
-          transition: 'all 0.2s ease-in-out',
+          fontSize: '14px',
+          fontWeight: '400',
+          color: '#222f3e',
+          transition: 'background-color 0.1s ease',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          minWidth: '36px',
-          height: '36px',
-          boxShadow: isOpen ? '0 2px 4px rgba(59, 130, 246, 0.2)' : '0 1px 2px rgba(0, 0, 0, 0.05)',
+          minHeight: '28px',
+          boxShadow: 'none',
+          whiteSpace: 'nowrap',
         }}
         onMouseEnter={(e) => {
           if (!isOpen) {
-            e.currentTarget.style.backgroundColor = '#f9fafb';
-            e.currentTarget.style.borderColor = '#9ca3af';
+            e.currentTarget.style.backgroundColor = '#e9ecef';
           }
         }}
         onMouseLeave={(e) => {
           if (!isOpen) {
-            e.currentTarget.style.backgroundColor = '#ffffff';
-            e.currentTarget.style.borderColor = '#d1d5db';
+            e.currentTarget.style.backgroundColor = 'transparent';
           }
         }}
       >
@@ -103,12 +123,13 @@ const Dropdown: React.FC<DropdownProps> = ({ trigger, children, title }) => {
             left: '0',
             zIndex: 9999,
             backgroundColor: '#ffffff',
-            border: '1px solid #d1d5db',
-            borderRadius: '6px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            minWidth: '160px',
-            marginTop: '2px',
-            overflow: 'hidden'
+            border: '1px solid #ccc',
+            borderRadius: '3px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            minWidth: '180px',
+            marginTop: '4px',
+            overflow: 'hidden',
+            padding: '4px 0'
           }}
         >
           {children}
@@ -123,64 +144,26 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({ active, onMouseDown, chil
     title={title}
     onMouseDown={onMouseDown}
     style={{
-      backgroundColor: active ? '#3b82f6' : '#ffffff',
-      border: active ? '1px solid #3b82f6' : '1px solid #d1d5db',
-      borderRadius: '6px',
-      padding: '8px 12px',
-      margin: '2px',
+      backgroundColor: active ? '#dee2e6' : 'transparent',
+      border: 'none',
+      borderRadius: '3px',
+      padding: '5px 8px',
+      margin: '0',
       cursor: 'pointer',
-      fontSize: '13px',
-      fontWeight: '500',
-      color: active ? '#ffffff' : '#374151',
-      transition: 'all 0.2s ease-in-out',
+      fontSize: '14px',
+      fontWeight: '400',
+      color: '#222f3e',
+      transition: 'background-color 0.1s ease',
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      minWidth: '36px',
-      height: '36px',
-      boxShadow: active ? '0 2px 4px rgba(59, 130, 246, 0.2)' : '0 1px 2px rgba(0, 0, 0, 0.05)',
+      minHeight: '28px',
+      boxShadow: 'none',
+      whiteSpace: 'nowrap',
     }}
     onMouseEnter={(e) => {
       if (!active) {
-        e.currentTarget.style.backgroundColor = '#f9fafb';
-        e.currentTarget.style.borderColor = '#9ca3af';
-      }
-    }}
-    onMouseLeave={(e) => {
-      if (!active) {
-        e.currentTarget.style.backgroundColor = '#ffffff';
-        e.currentTarget.style.borderColor = '#d1d5db';
-      }
-    }}
-  >
-    {children}
-  </button>
-);
-
-const DropdownItem: React.FC<{
-  active: boolean;
-  onMouseDown: (event: React.MouseEvent) => void;
-  children: React.ReactNode;
-}> = ({ active, onMouseDown, children }) => (
-  <button
-    onMouseDown={onMouseDown}
-    style={{
-      width: '100%',
-      padding: '8px 12px',
-      border: 'none',
-      backgroundColor: active ? '#3b82f6' : 'transparent',
-      color: active ? '#ffffff' : '#374151',
-      fontSize: '13px',
-      fontWeight: '500',
-      cursor: 'pointer',
-      textAlign: 'left',
-      transition: 'all 0.2s ease-in-out',
-      borderRadius: '4px',
-      margin: '2px',
-    }}
-    onMouseEnter={(e) => {
-      if (!active) {
-        e.currentTarget.style.backgroundColor = '#f3f4f6';
+        e.currentTarget.style.backgroundColor = '#e9ecef';
       }
     }}
     onMouseLeave={(e) => {
@@ -193,20 +176,103 @@ const DropdownItem: React.FC<{
   </button>
 );
 
+const DropdownItem: React.FC<{
+  active: boolean;
+  onMouseDown: (event: React.MouseEvent) => void;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}> = ({ active, onMouseDown, children, icon }) => (
+  <button
+    onMouseDown={onMouseDown}
+    style={{
+      width: '100%',
+      padding: '6px 16px',
+      border: 'none',
+      backgroundColor: active ? '#e7f4ff' : 'transparent',
+      color: '#222f3e',
+      fontSize: '14px',
+      fontWeight: '400',
+      cursor: 'pointer',
+      textAlign: 'left',
+      transition: 'background-color 0.1s ease',
+      borderRadius: '0',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.backgroundColor = '#e7f4ff';
+    }}
+    onMouseLeave={(e) => {
+      if (!active) {
+        e.currentTarget.style.backgroundColor = 'transparent';
+      }
+    }}
+  >
+    {icon && <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</span>}
+    {children}
+  </button>
+);
+
 const ToolbarSeparator: React.FC = () => (
   <div
     style={{
       width: '1px',
       height: '24px',
-      backgroundColor: '#d1d5db',
-      margin: '0 8px',
+      backgroundColor: '#ccc',
+      margin: '0 4px',
       alignSelf: 'center',
     }}
   />
 );
 
-const Toolbar: React.FC<ToolbarProps> = ({ items, className }) => {
+const Toolbar: React.FC<ToolbarProps> = ({ 
+  items, 
+  className, 
+  onViewOutput, 
+  onEditLink,
+  searchQuery: propSearchQuery = '',
+  searchMatches: propSearchMatches = [],
+  currentMatchIndex: propCurrentMatchIndex = 0,
+  onSearchQueryChange,
+  onSearchMatchesChange,
+  onCurrentMatchIndexChange,
+  isFullscreen = false,
+  onFullscreenToggle,
+}) => {
   const editor = useSlate();
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkText, setLinkText] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkTitle, setLinkTitle] = useState('');
+  const [linkTarget, setLinkTarget] = useState<'_self' | '_blank'>('_self');
+  const [isEditingLink, setIsEditingLink] = useState(false);
+  const [showLinkContextMenu, setShowLinkContextMenu] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  
+  // Image modal state
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageAlt, setImageAlt] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUploadError, setImageUploadError] = useState('');
+  const [isReplacingImage, setIsReplacingImage] = useState(false);
+  const [replacingImagePath, setReplacingImagePath] = useState<any>(null);
+
+  // Table modal state
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [tableRows, setTableRows] = useState(3);
+  const [tableCols, setTableCols] = useState(3);
+
+  // Find & Replace state
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [replaceText, setReplaceText] = useState('');
+  const [totalMatches, setTotalMatches] = useState(0);
+  
+  // Use props for search state
+  const searchQuery = propSearchQuery;
+  const searchMatches = propSearchMatches;
+  const currentMatchIndex = propCurrentMatchIndex;
 
   const handleMarkToggle = (event: React.MouseEvent, format: FormatType) => {
     event.preventDefault();
@@ -245,24 +311,401 @@ const Toolbar: React.FC<ToolbarProps> = ({ items, className }) => {
 
   const handleLinkToggle = (event: React.MouseEvent) => {
     event.preventDefault();
-    if (isLinkActive(editor)) {
-      unwrapLink(editor);
+    // Always open modal for inserting new link from toolbar
+    // Get selected text if any
+    const selection = editor.selection;
+    if (selection) {
+      const selectedText = Editor.string(editor, selection);
+      setLinkText(selectedText);
     } else {
-      const url = window.prompt('Enter the URL of the link:');
-      if (url && !editor.selection?.anchor) {
-        alert('Select text to create a link');
+      setLinkText('');
+    }
+    setLinkUrl('');
+    setLinkTitle('');
+    setLinkTarget('_self');
+    setIsEditingLink(false);
+    setShowLinkModal(true);
+  };
+
+  const handleInsertLink = () => {
+    if (!linkUrl.trim()) {
+      alert('URL is required');
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(linkUrl);
+    } catch {
+      alert('Please enter a valid URL (e.g., https://example.com)');
+      return;
+    }
+
+    if (isEditingLink) {
+      // Update existing link
+      Transforms.setNodes(
+        editor,
+        { 
+          url: linkUrl,
+          title: linkTitle || undefined,
+          target: linkTarget
+        } as Partial<LinkElement>,
+        {
+          match: (n: any) => n.type === 'link'
+        }
+      );
+      
+      // Update link text if changed and there's a selection
+      if (linkText.trim() && editor.selection) {
+        // Delete current text in the link
+        Transforms.delete(editor, { at: editor.selection });
+        // Insert new text
+        Transforms.insertText(editor, linkText, { at: editor.selection });
+      }
+    } else {
+      // Insert new link (original logic)
+      if (linkText.trim()) {
+        // If user provided text, insert it with the link
+        if (editor.selection) {
+          // Delete current selection if any
+          Transforms.delete(editor);
+        }
+        // Insert link with text
+        Transforms.insertNodes(editor, {
+          type: 'link',
+          url: linkUrl,
+          title: linkTitle || undefined,
+          target: linkTarget,
+          children: [{ text: linkText }],
+        } as any);
+        // Move cursor after the link
+        Transforms.move(editor);
+      } else if (editor.selection && !Range.isCollapsed(editor.selection)) {
+        // If no text provided but there's a selection, wrap selection
+        insertLink(editor, linkUrl, linkTitle || undefined, linkTarget);
+      } else {
+        // No text and no selection - insert URL as text with link
+        Transforms.insertNodes(editor, {
+          type: 'link',
+          url: linkUrl,
+          title: linkTitle || undefined,
+          target: linkTarget,
+          children: [{ text: linkUrl }],
+        } as any);
+        Transforms.move(editor);
+      }
+    }
+
+    setShowLinkModal(false);
+    setLinkText('');
+    setLinkUrl('');
+    setLinkTitle('');
+    setLinkTarget('_self');
+    setIsEditingLink(false);
+  };
+
+  // Image handlers
+  const handleImageToggle = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setImageUrl('');
+    setImageAlt('');
+    setImageFile(null);
+    setImageUploadError('');
+    setIsReplacingImage(false);
+    setReplacingImagePath(null);
+    setShowImageModal(true);
+  };
+
+  const handleInsertImage = async () => {
+    setImageUploadError('');
+    
+    // Check if file upload is attempted
+    if (imageFile) {
+      // Check if onImageUpload is provided
+      const editifyProps = (window as any).__editifyProps;
+      if (!editifyProps?.onImageUpload) {
+        setImageUploadError('Upload not configured. Please define onImageUpload in your app.');
         return;
       }
-      if (url) {
-        insertLink(editor, url);
+      
+      try {
+        const uploadedUrl = await editifyProps.onImageUpload(imageFile);
+        
+        if (isReplacingImage && replacingImagePath) {
+          // Update existing image
+          Transforms.setNodes(
+            editor,
+            { 
+              url: uploadedUrl,
+              alt: imageAlt || imageFile.name
+            } as Partial<ImageElement>,
+            { at: replacingImagePath }
+          );
+        } else {
+          // Insert new image
+          insertImage(editor, uploadedUrl, imageAlt || imageFile.name);
+        }
+        
+        setShowImageModal(false);
+        setImageUrl('');
+        setImageAlt('');
+        setImageFile(null);
+        setIsReplacingImage(false);
+        setReplacingImagePath(null);
+      } catch (error) {
+        setImageUploadError('Failed to upload image: ' + (error as Error).message);
       }
+      return;
+    }
+    
+    // Insert via URL
+    if (!imageUrl.trim()) {
+      setImageUploadError('Please enter an image URL or select a file');
+      return;
+    }
+
+    if (!isValidImageUrl(imageUrl)) {
+      setImageUploadError('Please enter a valid image URL');
+      return;
+    }
+
+    if (isReplacingImage && replacingImagePath) {
+      // Update existing image
+      Transforms.setNodes(
+        editor,
+        { 
+          url: imageUrl,
+          alt: imageAlt || 'Image'
+        } as Partial<ImageElement>,
+        { at: replacingImagePath }
+      );
+    } else {
+      // Insert new image
+      insertImage(editor, imageUrl, imageAlt || 'Image');
+    }
+    
+    setShowImageModal(false);
+    setImageUrl('');
+    setImageAlt('');
+    setImageFile(null);
+    setIsReplacingImage(false);
+    setReplacingImagePath(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setImageUploadError('Please select an image file');
+        return;
+      }
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setImageUploadError('Image size should be less than 5MB');
+        return;
+      }
+      setImageFile(file);
+      setImageUploadError('');
     }
   };
 
-  const renderToolbarItem = (item: ToolbarItem) => {
-    // Group heading items and paragraph into a dropdown
-    const blockFormattingItems = ['paragraph', 'heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six', 'heading-seven', 'heading-eight'];
+  // Table handlers
+  const handleTableToggle = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setShowTableModal(true);
+    setTableRows(3);
+    setTableCols(3);
+  };
+
+  const handleInsertTable = () => {
+    insertTable(editor, tableRows, tableCols);
+    setShowTableModal(false);
+  };
+
+  // Find & Replace handlers
+  const handleFindReplaceToggle = (event: React.MouseEvent) => {
+    event.preventDefault();
+    setShowFindReplace(!showFindReplace);
+    if (!showFindReplace) {
+      onSearchQueryChange?.('');
+      setReplaceText('');
+      onCurrentMatchIndexChange?.(0);
+      onSearchMatchesChange?.([]);
+      setTotalMatches(0);
+    }
+  };
+
+  // Auto-search as user types
+  React.useEffect(() => {
+    if (!searchQuery || !showFindReplace) {
+      onSearchMatchesChange?.([]);
+      setTotalMatches(0);
+      onCurrentMatchIndexChange?.(0);
+      return;
+    }
+
+    const matches = findAllMatches(editor, searchQuery);
+    onSearchMatchesChange?.(matches);
+    setTotalMatches(matches.length);
     
+    if (matches.length > 0) {
+      onCurrentMatchIndexChange?.(0);
+      navigateToMatch(editor, matches[0]);
+    } else {
+      onCurrentMatchIndexChange?.(0);
+    }
+  }, [searchQuery, showFindReplace, editor, onSearchMatchesChange, onCurrentMatchIndexChange]);
+
+  const handleNextMatch = () => {
+    if (searchMatches.length === 0) return;
+    
+    const nextIndex = (currentMatchIndex + 1) % searchMatches.length;
+    onCurrentMatchIndexChange?.(nextIndex);
+    navigateToMatch(editor, searchMatches[nextIndex]);
+  };
+
+  const handlePrevMatch = () => {
+    if (searchMatches.length === 0) return;
+    
+    const prevIndex = currentMatchIndex === 0 ? searchMatches.length - 1 : currentMatchIndex - 1;
+    onCurrentMatchIndexChange?.(prevIndex);
+    navigateToMatch(editor, searchMatches[prevIndex]);
+  };
+
+  const handleReplace = () => {
+    if (searchMatches.length === 0 || currentMatchIndex >= searchMatches.length) return;
+    
+    replaceMatch(editor, searchMatches[currentMatchIndex], replaceText);
+    
+    // Re-search will happen automatically via useEffect
+    const matches = findAllMatches(editor, searchQuery);
+    onSearchMatchesChange?.(matches);
+  };
+
+  const handleReplaceAll = () => {
+    if (searchMatches.length === 0) return;
+    
+    replaceAllMatches(editor, searchMatches, replaceText);
+    
+    // Clear search after replace all
+    onSearchQueryChange?.('');
+    setTimeout(() => {
+      onSearchQueryChange?.('');
+      setReplaceText('');
+      onSearchMatchesChange?.([]);
+      setTotalMatches(0);
+      onCurrentMatchIndexChange?.(0);
+    }, 50);
+  };
+
+  // Effect to listen for external edit requests
+  React.useEffect(() => {
+    // This will be called from Editify component when user clicks Edit in popup
+    const handleExternalEdit = (linkData: { url: string; title?: string; target?: '_blank' | '_self'; text: string; path?: any }) => {
+      setLinkText(linkData.text);
+      setLinkUrl(linkData.url);
+      setLinkTitle(linkData.title || '');
+      setLinkTarget(linkData.target || '_self');
+      setIsEditingLink(true);
+      setShowLinkModal(true);
+      
+      // If path is provided, select that node so updates work correctly
+      if (linkData.path) {
+        editor.selection = Editor.range(editor, linkData.path);
+      }
+    };
+    
+    // Always store reference
+    (window as any).__editifyLinkEditHandler = handleExternalEdit;
+    
+    return () => {
+      delete (window as any).__editifyLinkEditHandler;
+    };
+  }, [editor]);
+
+  // Effect to listen for image replacement requests
+  React.useEffect(() => {
+    const handleImageReplace = (imageData: { url: string; alt?: string; width?: number; height?: number; align?: any; path: any }) => {
+      setImageUrl(imageData.url);
+      setImageAlt(imageData.alt || '');
+      setImageFile(null);
+      setImageUploadError('');
+      setIsReplacingImage(true);
+      setReplacingImagePath(imageData.path);
+      setShowImageModal(true);
+    };
+    
+    (window as any).__editifyImageReplaceHandler = handleImageReplace;
+    
+    return () => {
+      delete (window as any).__editifyImageReplaceHandler;
+    };
+  }, []);
+
+  // Define item groups
+  const blockFormattingItems = ['paragraph', 'heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six', 'heading-seven', 'heading-eight'];
+  const alignmentItems = ['left', 'center', 'right', 'justify'];
+  const formatItems = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'superscript', 'subscript'];
+  const listItems = ['bulleted-list', 'numbered-list', 'indent', 'outdent'];
+  const blockItems = ['blockquote', 'code-block'];
+  const colorItems = ['text-color', 'bg-color'];
+  const insertItems = ['link', 'horizontal-rule', 'image', 'table'];
+  const editItems = ['undo', 'redo'];
+  
+  // Predefined color palette
+  const colorPalette = [
+    { name: 'Black', value: '#000000' },
+    { name: 'Dark Gray', value: '#495057' },
+    { name: 'Gray', value: '#6c757d' },
+    { name: 'Light Gray', value: '#adb5bd' },
+    { name: 'Red', value: '#dc3545' },
+    { name: 'Orange', value: '#fd7e14' },
+    { name: 'Yellow', value: '#ffc107' },
+    { name: 'Green', value: '#28a745' },
+    { name: 'Teal', value: '#20c997' },
+    { name: 'Blue', value: '#007bff' },
+    { name: 'Indigo', value: '#6610f2' },
+    { name: 'Purple', value: '#6f42c1' },
+    { name: 'Pink', value: '#e83e8c' },
+    { name: 'White', value: '#ffffff' },
+  ];
+
+  const renderToolbarItem = (item: ToolbarItem, index: number) => {
+    // Handle separator - skip if it comes right after a grouped item (but not the first one)
+    if (item === 'separator') {
+      const prevItem = index > 0 ? items[index - 1] : null;
+      if (prevItem) {
+        // Check if previous item was part of a group but not the first item
+        if (formatItems.includes(prevItem)) {
+          const firstFormatIndex = items.findIndex(i => formatItems.includes(i));
+          if (firstFormatIndex !== index - 1) return null;
+        }
+        if (listItems.includes(prevItem)) {
+          const firstListIndex = items.findIndex(i => listItems.includes(i));
+          if (firstListIndex !== index - 1) return null;
+        }
+        if (alignmentItems.includes(prevItem)) {
+          const firstAlignIndex = items.findIndex(i => alignmentItems.includes(i));
+          if (firstAlignIndex !== index - 1) return null;
+        }
+        if (blockFormattingItems.includes(prevItem)) {
+          const firstBlockIndex = items.findIndex(i => blockFormattingItems.includes(i));
+          if (firstBlockIndex !== index - 1) return null;
+        }
+        if (insertItems.includes(prevItem)) {
+          const firstInsertIndex = items.findIndex(i => insertItems.includes(i));
+          if (firstInsertIndex !== index - 1) return null;
+        }
+        if (editItems.includes(prevItem)) {
+          const firstEditIndex = items.findIndex(i => editItems.includes(i));
+          if (firstEditIndex !== index - 1) return null;
+        }
+      }
+      return <ToolbarSeparator key={`separator-${index}`} />;
+    }
+    
+    // Group heading items and paragraph into a dropdown
     if (blockFormattingItems.includes(item)) {
       // Only render the dropdown for the first block formatting item encountered
       const firstBlockIndex = items.findIndex(i => blockFormattingItems.includes(i));
@@ -310,8 +753,8 @@ const Toolbar: React.FC<ToolbarProps> = ({ items, className }) => {
       return (
         <Dropdown
           key="block-formatting-dropdown"
-          trigger={activeBlock ? getBlockShort(activeBlock) : 'T'}
-          title="Text Format"
+          trigger={<span>{activeBlock ? getBlockLabel(activeBlock) : 'Paragraph'}</span>}
+          title="Block format"
         >
           {items.filter(i => blockFormattingItems.includes(i)).map(block => (
             <DropdownItem
@@ -327,8 +770,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ items, className }) => {
     }
 
     // Group alignment items into a dropdown
-    const alignmentItems = ['left', 'center', 'right', 'justify'];
-    
     if (alignmentItems.includes(item)) {
       // Only render the dropdown for the first alignment item encountered
       const firstAlignIndex = items.findIndex(i => alignmentItems.includes(i));
@@ -401,19 +842,17 @@ const Toolbar: React.FC<ToolbarProps> = ({ items, className }) => {
       return (
         <Dropdown
           key="alignment-dropdown"
-          trigger={activeAlignment ? getAlignmentIcon(activeAlignment) : '⬅'}
-          title="Text Alignment"
+          trigger={<span>Align</span>}
+          title="Text alignment"
         >
           {items.filter(i => alignmentItems.includes(i)).map(align => (
             <DropdownItem
               key={align}
               active={isAlignmentActive(editor, align as AlignmentType)}
               onMouseDown={(e) => handleAlignmentToggle(e, align as AlignmentType)}
+              icon={getAlignmentIcon(align)}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {getAlignmentIcon(align)} 
-                <span>{getAlignmentLabel(align)}</span>
-              </div>
+              {getAlignmentLabel(align)}
             </DropdownItem>
           ))}
         </Dropdown>
@@ -422,186 +861,1349 @@ const Toolbar: React.FC<ToolbarProps> = ({ items, className }) => {
 
     switch (item) {
       case 'bold':
-        return (
-          <ToolbarButton
-            key={item}
-            active={isMarkActive(editor, 'bold')}
-            onMouseDown={(e) => handleMarkToggle(e, 'bold')}
-            title="Bold"
-          >
-            <BoldIcon style={{ width: '16px', height: '16px' }} />
-          </ToolbarButton>
-        );
       case 'italic':
-        return (
-          <ToolbarButton
-            key={item}
-            active={isMarkActive(editor, 'italic')}
-            onMouseDown={(e) => handleMarkToggle(e, 'italic')}
-            title="Italic"
-          >
-            <ItalicIcon style={{ width: '16px', height: '16px' }} />
-          </ToolbarButton>
-        );
       case 'underline':
-        return (
-          <ToolbarButton
-            key={item}
-            active={isMarkActive(editor, 'underline')}
-            onMouseDown={(e) => handleMarkToggle(e, 'underline')}
-            title="Underline"
-          >
-            <UnderlineIcon style={{ width: '16px', height: '16px' }} />
-          </ToolbarButton>
-        );
-      case 'code':
-        return (
-          <ToolbarButton
-            key={item}
-            active={isMarkActive(editor, 'code')}
-            onMouseDown={(e) => handleMarkToggle(e, 'code')}
-            title="Code"
-          >
-            <CodeBracketIcon style={{ width: '16px', height: '16px' }} />
-          </ToolbarButton>
-        );
       case 'strikethrough':
-        return (
-          <ToolbarButton
-            key={item}
-            active={isMarkActive(editor, 'strikethrough')}
-            onMouseDown={(e) => handleMarkToggle(e, 'strikethrough')}
-            title="Strikethrough"
-          >
-            <span style={{ fontSize: '14px', textDecoration: 'line-through', fontWeight: '600' }}>S</span>
-          </ToolbarButton>
-        );
+      case 'code':
       case 'superscript':
+      case 'subscript': {
+        // Group all text formatting into a Format menu
+        const formatItems = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'superscript', 'subscript'];
+        const firstFormatIndex = items.findIndex(i => formatItems.includes(i));
+        const currentIndex = items.findIndex(i => i === item);
+        
+        if (firstFormatIndex !== currentIndex) return null;
+        
         return (
-          <ToolbarButton
-            key={item}
-            active={isMarkActive(editor, 'superscript')}
-            onMouseDown={(e) => handleMarkToggle(e, 'superscript')}
-            title="Superscript"
+          <Dropdown
+            key="format-menu"
+            trigger={<span>Format</span>}
+            title="Format"
           >
-            <span style={{ fontSize: '12px', fontWeight: '600' }}>X<sup>²</sup></span>
-          </ToolbarButton>
+            {items.includes('bold') && (
+              <DropdownItem
+                active={isMarkActive(editor, 'bold')}
+                onMouseDown={(e) => handleMarkToggle(e, 'bold')}
+                icon={<span style={{ fontWeight: 'bold', fontSize: '16px' }}>B</span>}
+              >
+                Bold
+              </DropdownItem>
+            )}
+            {items.includes('italic') && (
+              <DropdownItem
+                active={isMarkActive(editor, 'italic')}
+                onMouseDown={(e) => handleMarkToggle(e, 'italic')}
+                icon={<span style={{ fontStyle: 'italic', fontSize: '16px' }}>I</span>}
+              >
+                Italic
+              </DropdownItem>
+            )}
+            {items.includes('underline') && (
+              <DropdownItem
+                active={isMarkActive(editor, 'underline')}
+                onMouseDown={(e) => handleMarkToggle(e, 'underline')}
+                icon={<span style={{ textDecoration: 'underline', fontSize: '16px' }}>U</span>}
+              >
+                Underline
+              </DropdownItem>
+            )}
+            {items.includes('strikethrough') && (
+              <DropdownItem
+                active={isMarkActive(editor, 'strikethrough')}
+                onMouseDown={(e) => handleMarkToggle(e, 'strikethrough')}
+                icon={<span style={{ textDecoration: 'line-through', fontSize: '16px' }}>S</span>}
+              >
+                Strikethrough
+              </DropdownItem>
+            )}
+            {items.includes('code') && (
+              <DropdownItem
+                active={isMarkActive(editor, 'code')}
+                onMouseDown={(e) => handleMarkToggle(e, 'code')}
+                icon={<CodeBracketIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Code
+              </DropdownItem>
+            )}
+            {items.includes('superscript') && (
+              <DropdownItem
+                active={isMarkActive(editor, 'superscript')}
+                onMouseDown={(e) => handleMarkToggle(e, 'superscript')}
+                icon={<span style={{ fontSize: '12px' }}>X<sup>2</sup></span>}
+              >
+                Superscript
+              </DropdownItem>
+            )}
+            {items.includes('subscript') && (
+              <DropdownItem
+                active={isMarkActive(editor, 'subscript')}
+                onMouseDown={(e) => handleMarkToggle(e, 'subscript')}
+                icon={<span style={{ fontSize: '12px' }}>X<sub>2</sub></span>}
+              >
+                Subscript
+              </DropdownItem>
+            )}
+          </Dropdown>
         );
-      case 'subscript':
-        return (
-          <ToolbarButton
-            key={item}
-            active={isMarkActive(editor, 'subscript')}
-            onMouseDown={(e) => handleMarkToggle(e, 'subscript')}
-            title="Subscript"
-          >
-            <span style={{ fontSize: '12px', fontWeight: '600' }}>X<sub>₂</sub></span>
-          </ToolbarButton>
-        );
+      }
+      
       case 'bulleted-list':
-        return (
-          <ToolbarButton
-            key={item}
-            active={isBlockActive(editor, 'bulleted-list')}
-            onMouseDown={(e) => handleBlockToggle(e, 'bulleted-list')}
-            title="Bulleted List"
-          >
-            <ListBulletIcon style={{ width: '16px', height: '16px' }} />
-          </ToolbarButton>
-        );
       case 'numbered-list':
-        return (
-          <ToolbarButton
-            key={item}
-            active={isBlockActive(editor, 'numbered-list')}
-            onMouseDown={(e) => handleBlockToggle(e, 'numbered-list')}
-            title="Numbered List"
-          >
-            <span style={{ fontSize: '14px', fontWeight: '600' }}>1.</span>
-          </ToolbarButton>
-        );
-      case 'link':
-        return (
-          <ToolbarButton
-            key={item}
-            active={isLinkActive(editor)}
-            onMouseDown={handleLinkToggle}
-            title="Link"
-          >
-            <LinkIcon style={{ width: '16px', height: '16px' }} />
-          </ToolbarButton>
-        );
       case 'indent':
+      case 'outdent': {
+        // Group list controls into Lists menu
+        const listItems = ['bulleted-list', 'numbered-list', 'indent', 'outdent'];
+        const firstListIndex = items.findIndex(i => listItems.includes(i));
+        const currentIndex = items.findIndex(i => i === item);
+        
+        if (firstListIndex !== currentIndex) return null;
+        
         return (
-          <ToolbarButton
-            key={item}
-            active={false}
-            onMouseDown={handleIndent}
-            title="Indent"
+          <Dropdown
+            key="lists-menu"
+            trigger={<span>Lists</span>}
+            title="Lists"
           >
-            <ArrowRightIcon style={{ width: '16px', height: '16px' }} />
-          </ToolbarButton>
+            {items.includes('bulleted-list') && (
+              <DropdownItem
+                active={isBlockActive(editor, 'bulleted-list')}
+                onMouseDown={(e) => handleBlockToggle(e, 'bulleted-list')}
+                icon={<ListBulletIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Bullet list
+              </DropdownItem>
+            )}
+            {items.includes('numbered-list') && (
+              <DropdownItem
+                active={isBlockActive(editor, 'numbered-list')}
+                onMouseDown={(e) => handleBlockToggle(e, 'numbered-list')}
+                icon={<span style={{ fontSize: '14px', fontWeight: '600' }}>1.</span>}
+              >
+                Numbered list
+              </DropdownItem>
+            )}
+            {items.includes('indent') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={handleIndent}
+                icon={<ArrowRightIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Increase indent
+              </DropdownItem>
+            )}
+            {items.includes('outdent') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={handleOutdent}
+                icon={<ArrowLeftIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Decrease indent
+              </DropdownItem>
+            )}
+          </Dropdown>
         );
-      case 'outdent':
+      }
+      
+      case 'blockquote':
+      case 'code-block': {
+        // Group block elements into Blocks menu
+        const firstBlockItemIndex = items.findIndex(i => blockItems.includes(i));
+        const currentIndex = items.findIndex(i => i === item);
+        
+        if (firstBlockItemIndex !== currentIndex) return null;
+        
         return (
-          <ToolbarButton
-            key={item}
-            active={false}
-            onMouseDown={handleOutdent}
-            title="Outdent"
+          <Dropdown
+            key="blocks-menu"
+            trigger={<span>Blocks</span>}
+            title="Blocks"
           >
-            <ArrowLeftIcon style={{ width: '16px', height: '16px' }} />
-          </ToolbarButton>
+            {items.includes('blockquote') && (
+              <DropdownItem
+                active={isBlockActive(editor, 'blockquote')}
+                onMouseDown={(e) => handleBlockToggle(e, 'blockquote')}
+                icon={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>❝</span>}
+              >
+                Blockquote
+              </DropdownItem>
+            )}
+            {items.includes('code-block') && (
+              <DropdownItem
+                active={isBlockActive(editor, 'code-block')}
+                onMouseDown={(e) => handleBlockToggle(e, 'code-block')}
+                icon={<CodeBracketIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Code Block
+              </DropdownItem>
+            )}
+          </Dropdown>
         );
+      }
+      
+      case 'text-color':
+      case 'bg-color': {
+        // Group color controls into Color menu
+        const firstColorIndex = items.findIndex(i => colorItems.includes(i));
+        const currentIndex = items.findIndex(i => i === item);
+        
+        if (firstColorIndex !== currentIndex) return null;
+        
+        const activeTextColor = getActiveColor(editor);
+        const activeBgColor = getActiveBackgroundColor(editor);
+        
+        return (
+          <Dropdown
+            key="color-menu"
+            trigger={<span>Color</span>}
+            title="Color"
+          >
+            {items.includes('text-color') && (
+              <div style={{ padding: '8px 12px' }}>
+                <div style={{ 
+                  fontSize: '12px', 
+                  fontWeight: '600', 
+                  marginBottom: '8px',
+                  color: '#495057'
+                }}>
+                  Text Color
+                </div>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(7, 1fr)', 
+                  gap: '4px',
+                  marginBottom: '8px'
+                }}>
+                  {colorPalette.map((color) => (
+                    <button
+                      key={`text-${color.value}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyColor(editor, color.value);
+                      }}
+                      title={color.name}
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        backgroundColor: color.value,
+                        border: activeTextColor === color.value ? '2px solid #007bff' : '1px solid #dee2e6',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        padding: 0,
+                        boxShadow: color.value === '#ffffff' ? 'inset 0 0 0 1px #dee2e6' : 'none'
+                      }}
+                    />
+                  ))}
+                </div>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  marginBottom: '8px',
+                  paddingTop: '4px'
+                }}>
+                  <input
+                    type="color"
+                    value={activeTextColor || '#000000'}
+                    onChange={(e) => {
+                      applyColor(editor, e.target.value);
+                    }}
+                    title="Pick custom color"
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      padding: '0',
+                      backgroundColor: 'transparent'
+                    }}
+                  />
+                  <span style={{ 
+                    fontSize: '12px', 
+                    color: '#6c757d'
+                  }}>
+                    Custom
+                  </span>
+                </div>
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    applyColor(editor, null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '4px 8px',
+                    fontSize: '12px',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '3px',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    color: '#495057'
+                  }}
+                >
+                  Remove Color
+                </button>
+              </div>
+            )}
+            {items.includes('bg-color') && (
+              <div style={{ padding: '8px 12px', borderTop: '1px solid #dee2e6' }}>
+                <div style={{ 
+                  fontSize: '12px', 
+                  fontWeight: '600', 
+                  marginBottom: '8px',
+                  color: '#495057'
+                }}>
+                  Background Highlight
+                </div>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(7, 1fr)', 
+                  gap: '4px',
+                  marginBottom: '8px'
+                }}>
+                  {colorPalette.map((color) => (
+                    <button
+                      key={`bg-${color.value}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        applyBackgroundColor(editor, color.value);
+                      }}
+                      title={color.name}
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        backgroundColor: color.value,
+                        border: activeBgColor === color.value ? '2px solid #007bff' : '1px solid #dee2e6',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        padding: 0,
+                        boxShadow: color.value === '#ffffff' ? 'inset 0 0 0 1px #dee2e6' : 'none'
+                      }}
+                    />
+                  ))}
+                </div>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  marginBottom: '8px',
+                  paddingTop: '4px'
+                }}>
+                  <input
+                    type="color"
+                    value={activeBgColor || '#ffffff'}
+                    onChange={(e) => {
+                      applyBackgroundColor(editor, e.target.value);
+                    }}
+                    title="Pick custom color"
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      padding: '0',
+                      backgroundColor: 'transparent'
+                    }}
+                  />
+                  <span style={{ 
+                    fontSize: '12px', 
+                    color: '#6c757d'
+                  }}>
+                    Custom
+                  </span>
+                </div>
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    applyBackgroundColor(editor, null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '4px 8px',
+                    fontSize: '12px',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '3px',
+                    backgroundColor: 'transparent',
+                    cursor: 'pointer',
+                    color: '#495057'
+                  }}
+                >
+                  Remove Highlight
+                </button>
+              </div>
+            )}
+          </Dropdown>
+        );
+      }
+      
+      case 'link':
+      case 'horizontal-rule':
+      case 'image':
+      case 'table': {
+        // Group link, horizontal-rule, image, and table into Insert menu
+        const firstInsertIndex = items.findIndex(i => insertItems.includes(i));
+        const currentIndex = items.findIndex(i => i === item);
+        
+        if (firstInsertIndex !== currentIndex) return null;
+        
+        return (
+          <Dropdown
+            key="insert-menu"
+            trigger={<span>Insert</span>}
+            title="Insert"
+          >
+            {items.includes('link') && (
+              <DropdownItem
+                active={isLinkActive(editor)}
+                onMouseDown={handleLinkToggle}
+                icon={<LinkIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Link
+              </DropdownItem>
+            )}
+            {items.includes('image') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={handleImageToggle}
+                icon={<PhotoIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Image
+              </DropdownItem>
+            )}
+            {items.includes('table') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={handleTableToggle}
+                icon={<TableCellsIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Table
+              </DropdownItem>
+            )}
+            {items.includes('horizontal-rule') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  insertHorizontalRule(editor);
+                }}
+                icon={<span style={{ fontSize: '16px', fontWeight: 'bold' }}>―</span>}
+              >
+                Horizontal Rule
+              </DropdownItem>
+            )}
+          </Dropdown>
+        );
+      }
+      
       case 'undo':
+      case 'redo': {
+        // Group undo/redo into Edit menu
+        const firstEditIndex = items.findIndex(i => editItems.includes(i));
+        const currentIndex = items.findIndex(i => i === item);
+        
+        if (firstEditIndex !== currentIndex) return null;
+        
+        return (
+          <Dropdown
+            key="edit-menu"
+            trigger={<span>Edit</span>}
+            title="Edit"
+          >
+            {items.includes('undo') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={handleUndo}
+                icon={<ArrowUturnLeftIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Undo
+              </DropdownItem>
+            )}
+            {items.includes('redo') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={handleRedo}
+                icon={<ArrowUturnRightIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Redo
+              </DropdownItem>
+            )}
+          </Dropdown>
+        );
+      }
+      case 'view-output':
+        return (
+          <Dropdown
+            key={item}
+            trigger={<span>View</span>}
+            title="View Output"
+          >
+            <DropdownItem
+              active={false}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                if (onViewOutput) {
+                  onViewOutput('html');
+                }
+              }}
+              icon={<span style={{ fontFamily: 'monospace', fontSize: '14px' }}>&lt;/&gt;</span>}
+            >
+              View HTML
+            </DropdownItem>
+            <DropdownItem
+              active={false}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                if (onViewOutput) {
+                  onViewOutput('json');
+                }
+              }}
+              icon={<span style={{ fontFamily: 'monospace', fontSize: '14px' }}>{ }</span>}
+            >
+              View JSON
+            </DropdownItem>
+          </Dropdown>
+        );
+      case 'find-replace':
         return (
           <ToolbarButton
             key={item}
-            active={false}
-            onMouseDown={handleUndo}
-            title="Undo (Ctrl+Z)"
+            active={showFindReplace}
+            onMouseDown={handleFindReplaceToggle}
+            title="Find & Replace"
           >
-            <ArrowUturnLeftIcon style={{ width: '16px', height: '16px' }} />
+            <MagnifyingGlassIcon style={{ width: '18px', height: '18px' }} />
           </ToolbarButton>
         );
-      case 'redo':
+      case 'fullscreen':
         return (
           <ToolbarButton
             key={item}
-            active={false}
-            onMouseDown={handleRedo}
-            title="Redo (Ctrl+Y)"
+            active={isFullscreen}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onFullscreenToggle?.();
+            }}
+            title={isFullscreen ? "Exit Fullscreen (Esc)" : "Enter Fullscreen (F11)"}
           >
-            <ArrowUturnRightIcon style={{ width: '16px', height: '16px' }} />
+            {isFullscreen ? (
+              <ArrowsPointingInIcon style={{ width: '18px', height: '18px' }} />
+            ) : (
+              <ArrowsPointingOutIcon style={{ width: '18px', height: '18px' }} />
+            )}
           </ToolbarButton>
         );
-      case 'separator':
-        return <ToolbarSeparator key={`separator-${Math.random()}`} />;
       default:
         return null;
     }
   };
 
   return (
-    <div className={className} style={{ 
-      border: '1px solid #e5e7eb', 
-      borderBottom: 'none', 
-      padding: '12px 16px', 
-      backgroundColor: '#ffffff',
-      borderRadius: '8px 8px 0 0',
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '2px',
-      alignItems: 'center',
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-      minHeight: '56px',
-      maxWidth: '100%',
-      overflow: 'visible',
-      position: 'relative',
-      zIndex: 100
-    }}>
-      {items.map(renderToolbarItem)}
-    </div>
+    <>
+      {showLinkModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+          onClick={() => {
+            setShowLinkModal(false);
+            setLinkText('');
+            setLinkUrl('');
+            setLinkTitle('');
+            setLinkTarget('_self');
+            setIsEditingLink(false);
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              padding: '24px',
+              width: '90%',
+              maxWidth: '500px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 20px 0', color: '#111827', fontSize: '20px', fontWeight: '600' }}>
+              {isEditingLink ? 'Edit Link' : 'Insert Link'}
+            </h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#374151', fontSize: '14px', fontWeight: '500' }}>
+                Text to display
+              </label>
+              <input
+                type="text"
+                value={linkText}
+                onChange={(e) => setLinkText(e.target.value)}
+                placeholder="Enter link text"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+              />
+              <small style={{ display: 'block', marginTop: '4px', color: '#6b7280', fontSize: '12px' }}>
+                If empty, will use URL or selected text as display text
+              </small>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#374151', fontSize: '14px', fontWeight: '500' }}>
+                URL <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://example.com"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleInsertLink();
+                  }
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#374151', fontSize: '14px', fontWeight: '500' }}>
+                Title
+              </label>
+              <input
+                type="text"
+                value={linkTitle}
+                onChange={(e) => setLinkTitle(e.target.value)}
+                placeholder="Link title (tooltip)"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+              />
+              <small style={{ display: 'block', marginTop: '4px', color: '#6b7280', fontSize: '12px' }}>
+                Appears as a tooltip when hovering over the link
+              </small>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#374151', fontSize: '14px', fontWeight: '500' }}>
+                Open link in
+              </label>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="linkTarget"
+                    value="_self"
+                    checked={linkTarget === '_self'}
+                    onChange={(e) => setLinkTarget(e.target.value as '_self' | '_blank')}
+                    style={{ marginRight: '6px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '14px', color: '#374151' }}>Current tab</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="linkTarget"
+                    value="_blank"
+                    checked={linkTarget === '_blank'}
+                    onChange={(e) => setLinkTarget(e.target.value as '_self' | '_blank')}
+                    style={{ marginRight: '6px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '14px', color: '#374151' }}>New tab</span>
+                </label>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowLinkModal(false);
+                  setLinkText('');
+                  setLinkUrl('');
+                  setLinkTitle('');
+                  setLinkTarget('_self');
+                  setIsEditingLink(false);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: '#ffffff',
+                  color: '#374151',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInsertLink}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  backgroundColor: '#3b82f6',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+              >
+                {isEditingLink ? 'Update Link' : 'Insert Link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showImageModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+          onClick={() => {
+            setShowImageModal(false);
+            setImageUrl('');
+            setImageAlt('');
+            setImageFile(null);
+            setImageUploadError('');
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              padding: '24px',
+              width: '90%',
+              maxWidth: '500px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 20px 0', color: '#111827', fontSize: '20px', fontWeight: '600' }}>
+              {isReplacingImage ? 'Replace Image' : 'Insert Image'}
+            </h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#374151', fontSize: '14px', fontWeight: '500' }}>
+                Image URL
+              </label>
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                disabled={!!imageFile}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  backgroundColor: imageFile ? '#f9fafb' : '#ffffff',
+                }}
+                onFocus={(e) => !imageFile && (e.target.style.borderColor = '#3b82f6')}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+              />
+            </div>
+
+            <div style={{ 
+              marginBottom: '16px',
+              padding: '12px',
+              backgroundColor: '#f9fafb',
+              borderRadius: '6px',
+              textAlign: 'center'
+            }}>
+              <p style={{ margin: '0 0 12px 0', color: '#6b7280', fontSize: '14px' }}>
+                Or upload from your computer
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+                id="image-upload"
+              />
+              <label
+                htmlFor="image-upload"
+                style={{
+                  display: 'inline-block',
+                  padding: '8px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: '#ffffff',
+                  color: '#374151',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
+              >
+                Choose File
+              </label>
+              {imageFile && (
+                <p style={{ margin: '8px 0 0 0', color: '#374151', fontSize: '13px' }}>
+                  Selected: {imageFile.name}
+                </p>
+              )}
+              {!( (window as any).__editifyProps?.onImageUpload) && (
+                <p style={{ 
+                  margin: '8px 0 0 0', 
+                  color: '#dc2626', 
+                  fontSize: '12px',
+                  fontStyle: 'italic'
+                }}>
+                  ⚠ Upload not configured. Define onImageUpload in your app.
+                </p>
+              )}
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#374151', fontSize: '14px', fontWeight: '500' }}>
+                Alt Text (optional)
+              </label>
+              <input
+                type="text"
+                value={imageAlt}
+                onChange={(e) => setImageAlt(e.target.value)}
+                placeholder="Describe the image"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+              />
+              <small style={{ display: 'block', marginTop: '4px', color: '#6b7280', fontSize: '12px' }}>
+                For accessibility
+              </small>
+            </div>
+
+            {imageUploadError && (
+              <div style={{
+                marginBottom: '16px',
+                padding: '12px',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '6px',
+                color: '#dc2626',
+                fontSize: '14px'
+              }}>
+                {imageUploadError}
+              </div>
+            )}
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowImageModal(false);
+                  setImageUrl('');
+                  setImageAlt('');
+                  setImageFile(null);
+                  setImageUploadError('');
+                }}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: '#ffffff',
+                  color: '#374151',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInsertImage}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  backgroundColor: '#3b82f6',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+              >
+                {isReplacingImage ? 'Replace' : 'Insert Image'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Table Modal */}
+      {showTableModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
+              Insert Table
+            </h3>
+
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(10, 30px)',
+                gridTemplateRows: 'repeat(10, 30px)',
+                gap: '2px',
+                padding: '8px',
+                backgroundColor: '#f9fafb',
+                borderRadius: '4px',
+                width: 'fit-content',
+              }}>
+                {Array.from({ length: 100 }, (_, index) => {
+                  const row = Math.floor(index / 10) + 1;
+                  const col = (index % 10) + 1;
+                  const isHighlighted = row <= tableRows && col <= tableCols;
+                  
+                  return (
+                    <div
+                      key={index}
+                      onMouseEnter={() => {
+                        setTableRows(row);
+                        setTableCols(col);
+                      }}
+                      onClick={handleInsertTable}
+                      style={{
+                        width: '30px',
+                        height: '30px',
+                        border: '1px solid #d1d5db',
+                        backgroundColor: isHighlighted ? '#3b82f6' : 'white',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.1s ease',
+                        borderRadius: '2px',
+                      }}
+                    />
+                  );
+                })}
+              </div>
+              
+              <div style={{ 
+                marginTop: '12px',
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+              }}>
+                {tableRows} × {tableCols} Table
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowTableModal(false)}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInsertTable}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+              >
+                Insert Table
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div className={className} style={{ 
+        border: '1px solid #ccc', 
+        borderBottom: showFindReplace ? 'none' : '1px solid #ccc', 
+        padding: '4px 8px', 
+        backgroundColor: '#fff',
+        borderRadius: showFindReplace ? '4px 4px 0 0' : '4px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '2px',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: 'none',
+        minHeight: '42px',
+        maxWidth: '100%',
+        overflow: 'visible',
+        position: 'relative',
+        zIndex: 100
+      }}>
+        {/* Left side: All items except fullscreen and find-replace */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px', alignItems: 'center', flex: 1 }}>
+          {items.filter(item => item !== 'fullscreen' && item !== 'find-replace').map((item, index) => renderToolbarItem(item, index))}
+        </div>
+        
+        {/* Right side: Find-replace and Fullscreen buttons */}
+        <div style={{ display: 'flex', gap: '2px', marginLeft: '8px' }}>
+          {items.includes('find-replace') && renderToolbarItem('find-replace', items.length - 1)}
+          {items.includes('fullscreen') && renderToolbarItem('fullscreen', items.length)}
+        </div>
+      </div>
+
+      {/* Find & Replace Panel - Below Toolbar */}
+      {showFindReplace && (
+        <div style={{
+          backgroundColor: '#f9fafb',
+          border: '1px solid #ccc',
+          borderTop: 'none',
+          borderRadius: '0 0 4px 4px',
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+        }}>
+          {/* Search Input */}
+          <div style={{ flex: '1', minWidth: '200px' }}>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchQueryChange?.(e.target.value)}
+                placeholder="Find..."
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '8px 10px 8px 32px',
+                  border: searchQuery && totalMatches === 0 ? '1px solid #ef4444' : '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  outline: 'none',
+                  transition: 'all 0.2s',
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => {
+                  if (!searchQuery || totalMatches > 0) {
+                    e.currentTarget.style.borderColor = '#3b82f6';
+                  }
+                }}
+                onBlur={(e) => {
+                  if (searchQuery && totalMatches === 0) {
+                    e.currentTarget.style.borderColor = '#ef4444';
+                  } else {
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }
+                }}
+              />
+              <MagnifyingGlassIcon 
+                style={{ 
+                  width: '16px', 
+                  height: '16px',
+                  position: 'absolute',
+                  left: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#9ca3af',
+                  pointerEvents: 'none',
+                }} 
+              />
+            </div>
+            {searchQuery && (
+              <div style={{ 
+                marginTop: '4px', 
+                fontSize: '11px', 
+                color: totalMatches === 0 ? '#ef4444' : '#6b7280',
+              }}>
+                {totalMatches === 0 ? 'No matches' : `${currentMatchIndex + 1} of ${totalMatches}`}
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Buttons */}
+          {searchQuery && (
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button
+                onClick={handlePrevMatch}
+                disabled={totalMatches === 0}
+                title="Previous match (Shift+Enter)"
+                style={{
+                  padding: '8px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: totalMatches === 0 ? '#f3f4f6' : 'white',
+                  cursor: totalMatches === 0 ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: totalMatches === 0 ? '#d1d5db' : '#6b7280',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (totalMatches > 0) {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (totalMatches > 0) {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }
+                }}
+              >
+                <ChevronLeftIcon style={{ width: '14px', height: '14px' }} />
+              </button>
+              <button
+                onClick={handleNextMatch}
+                disabled={totalMatches === 0}
+                title="Next match (Enter)"
+                style={{
+                  padding: '8px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: totalMatches === 0 ? '#f3f4f6' : 'white',
+                  cursor: totalMatches === 0 ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: totalMatches === 0 ? '#d1d5db' : '#6b7280',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (totalMatches > 0) {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (totalMatches > 0) {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }
+                }}
+              >
+                <ChevronRightIcon style={{ width: '14px', height: '14px' }} />
+              </button>
+            </div>
+          )}
+
+          {/* Replace Input */}
+          <div style={{ flex: '1', minWidth: '200px' }}>
+            <input
+              type="text"
+              value={replaceText}
+              onChange={(e) => setReplaceText(e.target.value)}
+              placeholder="Replace..."
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '13px',
+                outline: 'none',
+                transition: 'all 0.2s',
+                backgroundColor: 'white',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#3b82f6';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = '#d1d5db';
+              }}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              onClick={handleReplace}
+              disabled={searchMatches.length === 0}
+              title="Replace current match"
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                backgroundColor: searchMatches.length === 0 ? '#f3f4f6' : 'white',
+                color: searchMatches.length === 0 ? '#9ca3af' : '#374151',
+                cursor: searchMatches.length === 0 ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                if (searchMatches.length > 0) {
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  e.currentTarget.style.borderColor = '#9ca3af';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (searchMatches.length > 0) {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#d1d5db';
+                }
+              }}
+            >
+              Replace
+            </button>
+            <button
+              onClick={handleReplaceAll}
+              disabled={searchMatches.length === 0}
+              title="Replace all matches"
+              style={{
+                padding: '8px 12px',
+                border: 'none',
+                borderRadius: '6px',
+                backgroundColor: searchMatches.length === 0 ? '#cbd5e1' : '#3b82f6',
+                color: 'white',
+                cursor: searchMatches.length === 0 ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                if (searchMatches.length > 0) {
+                  e.currentTarget.style.backgroundColor = '#2563eb';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (searchMatches.length > 0) {
+                  e.currentTarget.style.backgroundColor = '#3b82f6';
+                }
+              }}
+            >
+              Replace All
+            </button>
+          </div>
+
+          {/* Close Button */}
+          <button
+            onClick={() => setShowFindReplace(false)}
+            title="Close (Esc)"
+            style={{
+              padding: '8px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              color: '#6b7280',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#fee2e2';
+              e.currentTarget.style.borderColor = '#ef4444';
+              e.currentTarget.style.color = '#dc2626';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'white';
+              e.currentTarget.style.borderColor = '#d1d5db';
+              e.currentTarget.style.color = '#6b7280';
+            }}
+          >
+            <XMarkIcon style={{ width: '16px', height: '16px' }} />
+          </button>
+        </div>
+      )}
+    </>
   );
 };
 

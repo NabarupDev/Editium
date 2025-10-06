@@ -1,12 +1,14 @@
 {
-  "name": "editify",
+  "name": "editium",
   "version": "1.0.0",
-  "description": "A React-based rich text editor component built with Slate.js",
+  "description": "A powerful and feature-rich React rich text editor component built with Slate.js, featuring comprehensive formatting options, tables, images, find & replace, and more",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "rollup -c",
@@ -22,9 +24,33 @@
     "slate",
     "wysiwyg",
     "text-editor",
-    "contenteditable"
+    "contenteditable",
+    "markdown",
+    "formatting",
+    "tables",
+    "images",
+    "find-replace",
+    "fullscreen",
+    "word-count",
+    "character-count",
+    "slate-editor",
+    "react-editor",
+    "text-formatting",
+    "content-editor",
+    "document-editor"
   ],
-  "author": "",
+  "author": {
+    "name": "NabarupDev",
+    "url": "https://github.com/NabarupDev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NabarupDev/Editium.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NabarupDev/Editium/issues"
+  },
+  "homepage": "https://github.com/NabarupDev/Editium#readme",
   "license": "MIT",
   "peerDependencies": {
     "react": ">=16.8.0",
@@ -48,5 +74,12 @@
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-postcss": "^4.0.2",
     "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
