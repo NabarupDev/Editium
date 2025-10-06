@@ -68,11 +68,33 @@ npm install react react-dom
 
 ## Quick Start
 
+### With All Toolbar Items
+
+The simplest way to get started with all features enabled. Use `"all"` to include every available toolbar item:
+
+```tsx
+import { Editium } from 'editium';
+
+function FullFeaturedEditor() {
+  return (
+    <Editium
+      toolbar="all"
+      placeholder="Start typing..."
+      showWordCount={true}
+    />
+  );
+}
+```
+
+This automatically includes all available toolbar items in a logical, organized order.
+
 ### Basic Usage
+
+A minimal setup with just the onChange handler:
 
 ```tsx
 import React, { useState } from 'react';
-import { Editify } from 'editium';
+import { Editium } from 'editium';
 
 function App() {
   const [htmlOutput, setHtmlOutput] = useState('');
@@ -85,7 +107,7 @@ function App() {
 
   return (
     <div>
-      <Editify
+      <Editium
         onChange={handleChange}
         placeholder="Start typing..."
       />
@@ -98,12 +120,14 @@ export default App;
 
 ### With Custom Toolbar
 
+Customize the toolbar by selecting only the items you need:
+
 ```tsx
-import { Editify } from 'editium';
+import { Editium } from 'editium';
 
 function MyEditor() {
   return (
-    <Editify
+    <Editium
       toolbar={[
         'bold',
         'italic',
@@ -137,12 +161,12 @@ function MyEditor() {
 ### With Initial Content
 
 ```tsx
-import { Editify } from 'editium';
+import { Editium } from 'editium';
 
 const initialContent = [
   {
     type: 'heading-one',
-    children: [{ text: 'Welcome to Editify' }],
+    children: [{ text: 'Welcome to Editium' }],
   },
   {
     type: 'paragraph',
@@ -155,14 +179,14 @@ const initialContent = [
 ];
 
 function EditorWithContent() {
-  return <Editify initialValue={initialContent} />;
+  return <Editium initialValue={initialContent} />;
 }
 ```
 
 ### With Image Upload Handler
 
 ```tsx
-import { Editify } from 'editium';
+import { Editium } from 'editium';
 
 function EditorWithImages() {
   const handleImageUpload = async (file) => {
@@ -180,7 +204,7 @@ function EditorWithImages() {
   };
 
   return (
-    <Editify
+    <Editium
       onImageUpload={handleImageUpload}
       toolbar={['bold', 'italic', 'image']}
     />
@@ -234,13 +258,13 @@ The structured JSON format preserves the complete document structure:
 
 ## API Reference
 
-### EditifyProps
+### EditiumProps
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `initialValue` | `string \| CustomElement[]` | `undefined` | Initial content for the editor |
 | `onChange` | `(html: string, json: CustomElement[]) => void` | `undefined` | Callback fired when content changes |
-| `toolbar` | `ToolbarItem[]` | Basic toolbar | Array of toolbar items to display |
+| `toolbar` | `ToolbarItem[] \| 'all'` | Basic toolbar | Array of toolbar items to display, or `'all'` for all items |
 | `placeholder` | `string` | `'Start typing...'` | Placeholder text for empty editor |
 | `className` | `string` | `''` | Additional CSS class for the editor container |
 | `style` | `React.CSSProperties` | `{}` | Inline styles for the editor container |
@@ -252,6 +276,15 @@ The structured JSON format preserves the complete document structure:
 | `showWordCount` | `boolean` | `false` | Display word and character count |
 
 ### Toolbar Items
+
+You can customize the toolbar by providing an array of toolbar items, or use `'all'` to include all available items.
+
+**Using all toolbar items:**
+```tsx
+<Editium toolbar="all" />
+```
+
+**Custom selection of toolbar items:**
 
 Available toolbar items:
 
@@ -293,6 +326,21 @@ Available toolbar items:
 - `'fullscreen'` - Toggle fullscreen mode
 - `'view-output'` - View HTML/JSON output
 - `'separator'` - Visual separator in toolbar
+
+**Importing ALL_TOOLBAR_ITEMS:**
+
+If you need to programmatically access all toolbar items, you can import the constant:
+
+```tsx
+import { Editium, ALL_TOOLBAR_ITEMS } from 'editium';
+
+// Use all items
+<Editium toolbar="all" />
+
+// Or customize by filtering
+const customToolbar = ALL_TOOLBAR_ITEMS.filter(item => item !== 'separator');
+<Editium toolbar={customToolbar} />
+```
 
 ### Custom Types
 

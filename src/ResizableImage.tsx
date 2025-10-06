@@ -126,9 +126,9 @@ const ResizableImage: React.FC<ResizableImageProps> = ({ element, attributes, ch
   // Handle image replacement
   const handleReplaceImage = useCallback(() => {
     // Trigger the image modal with replacement mode
-    if ((window as any).__editifyImageReplaceHandler) {
+    if ((window as any).__editiumImageReplaceHandler) {
       const path = ReactEditor.findPath(editor as ReactEditor, element);
-      (window as any).__editifyImageReplaceHandler({
+      (window as any).__editiumImageReplaceHandler({
         url: element.url,
         alt: element.alt,
         width: element.width,

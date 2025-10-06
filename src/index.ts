@@ -1,8 +1,8 @@
-export { default as Editify } from './Editify';
+export { default as Editium } from './Editium';
 export { default as ResizableImage } from './ResizableImage';
 export { TableComponent, TableRowComponent, TableCellComponent } from './TableElement';
 export type {
-  EditifyProps,
+  EditiumProps,
   CustomElement,
   CustomText,
   LinkElement,
@@ -13,6 +13,9 @@ export type {
   FormatType,
   BlockType,
   ToolbarItem,
+} from './types';
+export {
+  ALL_TOOLBAR_ITEMS,
 } from './types';
 export {
   serializeToHtml,

@@ -5,7 +5,7 @@ import { withHistory, HistoryEditor } from 'slate-history';
 import Toolbar from './Toolbar';
 import ResizableImage from './ResizableImage';
 import { TableComponent, TableRowComponent, TableCellComponent } from './TableElement';
-import { EditifyProps, CustomElement, CustomText, LinkElement, ImageElement, TableElement, TableRowElement, TableCellElement } from './types';
+import { EditiumProps, CustomElement, CustomText, LinkElement, ImageElement, TableElement, TableRowElement, TableCellElement, ALL_TOOLBAR_ITEMS } from './types';
 import { defaultInitialValue, serializeToHtml, toggleMark, unwrapLink, getTextContent, countWords, countCharacters, countCharactersNoSpaces } from './utils';
 
 // Render leaf nodes
@@ -87,7 +87,7 @@ const parseInitialValue = (initialValue?: string | CustomElement[]): CustomEleme
   return initialValue.length > 0 ? initialValue : defaultInitialValue;
 };
 
-const Editify: React.FC<EditifyProps> = ({
+const Editium: React.FC<EditiumProps> = ({
   initialValue,
   onChange,
   toolbar = ['bold', 'italic', 'underline', 'heading-one', 'heading-two', 'bulleted-list', 'numbered-list', 'link'],
@@ -101,6 +101,8 @@ const Editify: React.FC<EditifyProps> = ({
   currentMatchIndex: externalCurrentMatchIndex,
   showWordCount = false,
 }) => {
+  // Parse toolbar configuration - support 'all' keyword
+  const toolbarItems = toolbar === 'all' ? ALL_TOOLBAR_ITEMS : toolbar;
   const editor = useMemo(() => withHistory(withReact(createEditor())), []);
   const [value, setValue] = useState<CustomElement[]>(() => parseInitialValue(initialValue));
   const [showOutputModal, setShowOutputModal] = useState<'html' | 'json' | null>(null);
@@ -122,9 +124,9 @@ const Editify: React.FC<EditifyProps> = ({
   
   // Store props in window for Toolbar access
   useEffect(() => {
-    (window as any).__editifyProps = { onImageUpload };
+    (window as any).__editiumProps = { onImageUpload };
     return () => {
-      delete (window as any).__editifyProps;
+      delete (window as any).__editiumProps;
     };
   }, [onImageUpload]);
   const [selectedLinkPath, setSelectedLinkPath] = useState<any>(null);
@@ -258,7 +260,7 @@ const Editify: React.FC<EditifyProps> = ({
   }, [onChange]);
 
   // Calculate word and character counts
-  const textContent = useMemo(() => getTextContent(value), [value]);
+  const textContent = useMemo(() => getTextContent(editor.children), [editor.children]);
   const wordCount = useMemo(() => countWords(textContent), [textContent]);
   const charCount = useMemo(() => countCharacters(textContent), [textContent]);
   const charCountNoSpaces = useMemo(() => countCharactersNoSpaces(textContent), [textContent]);
@@ -334,7 +336,7 @@ const Editify: React.FC<EditifyProps> = ({
   // Render elements with link click handler
   const renderElementWithHandlers = useCallback((props: RenderElementProps) => {
     const { attributes, children, element } = props;
-    const style = { margin: 0, fontWeight: 'normal' };
+    const style = { margin: '0', fontWeight: 'normal' };
     const alignStyle = (element as CustomElement).align ? { 
       textAlign: (element as CustomElement).align as 'left' | 'center' | 'right' | 'justify' 
     } : {};
@@ -344,25 +346,25 @@ const Editify: React.FC<EditifyProps> = ({
       case 'paragraph':
         return <p {...attributes} style={combinedStyle}>{children}</p>;
       case 'heading-one':
-        return <h1 {...attributes} style={{...combinedStyle, fontSize: '2em'}}>{children}</h1>;
+        return <h1 {...attributes} style={{...combinedStyle, fontSize: '2em', margin: '0'}}>{children}</h1>;
       case 'heading-two':
-        return <h2 {...attributes} style={{...combinedStyle, fontSize: '1.5em'}}>{children}</h2>;
+        return <h2 {...attributes} style={{...combinedStyle, fontSize: '1.5em', margin: '0'}}>{children}</h2>;
       case 'heading-three':
-        return <h3 {...attributes} style={{...combinedStyle, fontSize: '1.25em'}}>{children}</h3>;
+        return <h3 {...attributes} style={{...combinedStyle, fontSize: '1.25em', margin: '0'}}>{children}</h3>;
       case 'heading-four':
-        return <h4 {...attributes} style={{...combinedStyle, fontSize: '1.1em'}}>{children}</h4>;
+        return <h4 {...attributes} style={{...combinedStyle, fontSize: '1.1em', margin: '0'}}>{children}</h4>;
       case 'heading-five':
-        return <h5 {...attributes} style={{...combinedStyle, fontSize: '1em'}}>{children}</h5>;
+        return <h5 {...attributes} style={{...combinedStyle, fontSize: '1em', margin: '0'}}>{children}</h5>;
       case 'heading-six':
-        return <h6 {...attributes} style={{...combinedStyle, fontSize: '0.9em'}}>{children}</h6>;
+        return <h6 {...attributes} style={{...combinedStyle, fontSize: '0.9em', margin: '0'}}>{children}</h6>;
       case 'heading-seven':
-        return <h1 {...attributes} style={{...combinedStyle, fontSize: '0.85em'}}>{children}</h1>;
+        return <h1 {...attributes} style={{...combinedStyle, fontSize: '0.85em', margin: '0'}}>{children}</h1>;
       case 'heading-eight':
-        return <h1 {...attributes} style={{...combinedStyle, fontSize: '0.8em'}}>{children}</h1>;
+        return <h1 {...attributes} style={{...combinedStyle, fontSize: '0.8em', margin: '0'}}>{children}</h1>;
       case 'bulleted-list':
-        return <ul {...attributes} style={style}>{children}</ul>;
+        return <ul {...attributes} style={{...style, margin: '0'}}>{children}</ul>;
       case 'numbered-list':
-        return <ol {...attributes} style={style}>{children}</ol>;
+        return <ol {...attributes} style={{...style, margin: '0'}}>{children}</ol>;
       case 'list-item':
         return <li {...attributes}>{children}</li>;
       case 'blockquote':
@@ -501,8 +503,8 @@ const Editify: React.FC<EditifyProps> = ({
       const linkText = Editor.string(editor, selectedLinkPath);
       
       // Call the window handler to trigger edit in toolbar
-      if ((window as any).__editifyLinkEditHandler) {
-        (window as any).__editifyLinkEditHandler({
+      if ((window as any).__editiumLinkEditHandler) {
+        (window as any).__editiumLinkEditHandler({
           url: selectedLink.url,
           title: selectedLink.title,
           target: selectedLink.target,
@@ -551,6 +553,7 @@ const Editify: React.FC<EditifyProps> = ({
     lineHeight: '1.6',
     outline: 'none',
     backgroundColor: '#fff',
+    position: 'relative',
     ...style,
   };
 
@@ -576,8 +579,71 @@ const Editify: React.FC<EditifyProps> = ({
   } : editorStyle;
 
   return (
-    <div className={className} style={containerStyle}>
-      {showLinkPopup && (
+    <>
+      <style>
+        {`
+          [data-slate-editor] {
+            position: relative;
+            min-height: inherit;
+          }
+          
+          [data-slate-editor] [data-slate-placeholder] {
+            opacity: 0.333;
+            pointer-events: none;
+            user-select: none;
+            display: inline-block !important;
+            width: 100%;
+            max-width: 100%;
+            white-space: nowrap;
+            margin: 0 !important;
+            vertical-align: text-top;
+          }
+          
+          [data-slate-editor] p,
+          [data-slate-editor] h1,
+          [data-slate-editor] h2,
+          [data-slate-editor] h3,
+          [data-slate-editor] h4,
+          [data-slate-editor] h5,
+          [data-slate-editor] h6 {
+            position: relative;
+          }
+          
+          [data-slate-editor] [contenteditable="true"] {
+            outline: none;
+            position: relative;
+            z-index: 1;
+          }
+          
+          [data-slate-editor] > * {
+            margin: 0 !important;
+            line-height: 1.6;
+          }
+          
+          [data-slate-editor] p {
+            margin: 0 !important;
+            line-height: 1.6;
+          }
+          
+          [data-slate-editor] h1,
+          [data-slate-editor] h2,
+          [data-slate-editor] h3,
+          [data-slate-editor] h4,
+          [data-slate-editor] h5,
+          [data-slate-editor] h6 {
+            margin: 0 !important;
+            line-height: 1.6;
+          }
+          
+          [data-slate-editor] ul,
+          [data-slate-editor] ol {
+            margin: 0 !important;
+            padding-left: 24px;
+          }
+        `}
+      </style>
+      <div className={className} style={containerStyle}>
+        {showLinkPopup && (
         <div
           style={{
             position: 'fixed',
@@ -694,9 +760,9 @@ const Editify: React.FC<EditifyProps> = ({
         </div>
       )}
       <Slate editor={editor} initialValue={value} onValueChange={handleChange}>
-        {toolbar.length > 0 && (
+        {toolbarItems.length > 0 && (
           <Toolbar 
-            items={toolbar} 
+            items={toolbarItems} 
             onViewOutput={(type) => setShowOutputModal(type)} 
             onEditLink={() => {}}
             searchQuery={searchQuery}
@@ -731,22 +797,49 @@ const Editify: React.FC<EditifyProps> = ({
           borderBottom: isFullscreen ? 'none' : '1px solid #ccc',
           borderRadius: isFullscreen ? '0' : '0 0 4px 4px',
           display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           gap: '20px',
           fontSize: '12px',
           color: '#6b7280',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontWeight: '500', color: '#374151' }}>Words:</span>
-            <span style={{ fontWeight: '600', color: '#111827' }}>{wordCount.toLocaleString()}</span>
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontWeight: '500', color: '#374151' }}>Words:</span>
+              <span style={{ fontWeight: '600', color: '#111827' }}>{wordCount.toLocaleString()}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontWeight: '500', color: '#374151' }}>Characters:</span>
+              <span style={{ fontWeight: '600', color: '#111827' }}>{charCount.toLocaleString()}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontWeight: '500', color: '#374151' }}>Characters (no spaces):</span>
+              <span style={{ fontWeight: '600', color: '#111827' }}>{charCountNoSpaces.toLocaleString()}</span>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontWeight: '500', color: '#374151' }}>Characters:</span>
-            <span style={{ fontWeight: '600', color: '#111827' }}>{charCount.toLocaleString()}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontWeight: '500', color: '#374151' }}>Characters (no spaces):</span>
-            <span style={{ fontWeight: '600', color: '#111827' }}>{charCountNoSpaces.toLocaleString()}</span>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '6px',
+            color: '#9ca3af',
+            fontSize: '11px',
+          }}>
+            <span>Built with</span>
+            <span 
+              style={{ 
+                fontWeight: '600', 
+                color: '#3b82f6',
+                letterSpacing: '0.5px',
+                cursor: 'pointer',
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                window.open('https://www.npmjs.com/package/editium', '_blank');
+              }}
+            >
+              Editium
+            </span>
           </div>
         </div>
       )}
@@ -886,8 +979,9 @@ const Editify: React.FC<EditifyProps> = ({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
-export default Editify;
+export default Editium;

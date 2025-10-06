@@ -422,14 +422,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
     // Check if file upload is attempted
     if (imageFile) {
       // Check if onImageUpload is provided
-      const editifyProps = (window as any).__editifyProps;
-      if (!editifyProps?.onImageUpload) {
+      const editiumProps = (window as any).__editiumProps;
+      if (!editiumProps?.onImageUpload) {
         setImageUploadError('Upload not configured. Please define onImageUpload in your app.');
         return;
       }
       
       try {
-        const uploadedUrl = await editifyProps.onImageUpload(imageFile);
+        const uploadedUrl = await editiumProps.onImageUpload(imageFile);
         
         if (isReplacingImage && replacingImagePath) {
           // Update existing image
@@ -601,7 +601,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
   // Effect to listen for external edit requests
   React.useEffect(() => {
-    // This will be called from Editify component when user clicks Edit in popup
+    // This will be called from Editium component when user clicks Edit in popup
     const handleExternalEdit = (linkData: { url: string; title?: string; target?: '_blank' | '_self'; text: string; path?: any }) => {
       setLinkText(linkData.text);
       setLinkUrl(linkData.url);
@@ -617,10 +617,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
     };
     
     // Always store reference
-    (window as any).__editifyLinkEditHandler = handleExternalEdit;
+    (window as any).__editiumLinkEditHandler = handleExternalEdit;
     
     return () => {
-      delete (window as any).__editifyLinkEditHandler;
+      delete (window as any).__editiumLinkEditHandler;
     };
   }, [editor]);
 
@@ -636,10 +636,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
       setShowImageModal(true);
     };
     
-    (window as any).__editifyImageReplaceHandler = handleImageReplace;
+    (window as any).__editiumImageReplaceHandler = handleImageReplace;
     
     return () => {
-      delete (window as any).__editifyImageReplaceHandler;
+      delete (window as any).__editiumImageReplaceHandler;
     };
   }, []);
 
@@ -1700,7 +1700,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                   Selected: {imageFile.name}
                 </p>
               )}
-              {!( (window as any).__editifyProps?.onImageUpload) && (
+              {!( (window as any).__editiumProps?.onImageUpload) && (
                 <p style={{ 
                   margin: '8px 0 0 0', 
                   color: '#dc2626', 
