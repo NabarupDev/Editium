@@ -1,0 +1,49 @@
+# Exclude source files - only ship compiled code
+src/
+test/
+example/
+
+# Configuration files
+tsconfig.json
+rollup.config.js
+vitest.config.ts
+
+# Development files
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+azure-pipelines.yml
+
+# Testing
+coverage/
+.nyc_output/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Build artifacts (keep dist/)
+node_modules/
+*.tsbuildinfo
+
+# Documentation (not needed in package)
+TESTING_SUMMARY.md
+docs/
+
+# Misc
+*.map
+.eslintrc*
+.prettierrc*
+.editorconfig

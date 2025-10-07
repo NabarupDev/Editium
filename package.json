@@ -1,6 +1,7 @@
 {
   "name": "editium",
   "version": "1.0.0",
+  "private": true,
   "description": "A powerful and feature-rich React rich text editor component built with Slate.js, featuring comprehensive formatting options, tables, images, find & replace, and more",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -15,7 +16,12 @@
     "build:watch": "rollup -c -w",
     "dev": "npm run build:watch",
     "example": "cd example && npm start",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "semantic-release": "semantic-release"
   },
   "keywords": [
     "react",
@@ -66,14 +72,26 @@
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.5",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/ui": "^3.2.4",
+    "conventional-changelog-conventionalcommits": "^9.1.0",
+    "jsdom": "^27.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup": "^4.9.1",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-postcss": "^4.0.2",
-    "typescript": "^5.3.3"
+    "semantic-release": "^24.2.9",
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=14.0.0",
