@@ -1,0 +1,717 @@
+/**
+ * Editium - Vanilla JavaScript Rich Text Editor Styles
+ * Matches the React version UI
+ */
+
+/* Main container */
+.editium-wrapper {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Fullscreen mode */
+.editium-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  border-radius: 0;
+  margin: 0;
+}
+
+/* Toolbar */
+.editium-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ccc;
+  border-radius: 4px 4px 0 0;
+  align-items: center;
+}
+
+.editium-toolbar-button {
+  background-color: transparent;
+  border: none;
+  border-radius: 3px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 400;
+  color: #222f3e;
+  transition: background-color 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.editium-toolbar-button i {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editium-toolbar-button:hover {
+  background-color: #e9ecef;
+}
+
+.editium-toolbar-button:active,
+.editium-toolbar-button.active {
+  background-color: #dee2e6;
+}
+
+.editium-toolbar-button strong,
+.editium-toolbar-button em,
+.editium-toolbar-button u,
+.editium-toolbar-button s {
+  pointer-events: none;
+}
+
+.editium-toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background-color: #ccc;
+  margin: 0 4px;
+  align-self: center;
+}
+
+/* Dropdown */
+.editium-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.editium-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.editium-dropdown-trigger::after {
+  content: '▼';
+  font-size: 8px;
+  margin-left: 2px;
+  opacity: 0.6;
+}
+
+.editium-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin-top: 4px;
+  min-width: 180px;
+  z-index: 9999;
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.editium-dropdown-menu.show {
+  display: block;
+}
+
+.editium-dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 400;
+  color: #222f3e;
+  transition: background-color 0.1s ease;
+  border-radius: 0;
+}
+
+.editium-dropdown-menu button i {
+  font-size: 14px;
+  width: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editium-dropdown-menu button:hover {
+  background-color: #e7f4ff;
+}
+
+.editium-dropdown-menu button.active {
+  background-color: #e7f4ff;
+}
+
+.editium-dropdown-menu button i {
+  width: 16px;
+  text-align: center;
+  margin-right: 4px;
+}
+
+.editium-dropdown-menu button span {
+  flex: 1;
+  text-align: left;
+}
+
+/* Editor container */
+.editium-editor-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+/* Editor area */
+.editium-editor {
+  flex: 1;
+  padding: 16px;
+  min-height: 200px;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #000;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.editium-editor:empty:before {
+  content: attr(data-placeholder);
+  color: #999;
+  pointer-events: none;
+  position: absolute;
+}
+
+/* Content styles - Match React version exactly */
+.editium-editor h1,
+.editium-editor h2,
+.editium-editor h3,
+.editium-editor h4,
+.editium-editor h5,
+.editium-editor h6 {
+  margin: 0;
+  font-weight: normal;
+}
+
+.editium-editor h1 {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.editium-editor h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.editium-editor h3 {
+  font-size: 1.25em;
+  font-weight: bold;
+}
+
+.editium-editor h4 {
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.editium-editor h5 {
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.editium-editor h6 {
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+.editium-editor p {
+  margin: 0;
+  font-weight: normal;
+}
+
+.editium-editor blockquote {
+  margin: 1em 0;
+  padding-left: 1em;
+  border-left: 4px solid #dee2e6;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.editium-editor code {
+  background-color: #f4f4f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+
+.editium-editor pre {
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.editium-editor pre code {
+  background: none;
+  padding: 0;
+}
+
+.editium-editor ul,
+.editium-editor ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.editium-editor li {
+  margin: 0.5em 0;
+}
+
+.editium-editor a {
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.editium-editor a:hover {
+  color: #0056b3;
+}
+
+.editium-editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
+}
+
+.editium-editor img.resizable {
+  cursor: nwse-resize;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+  position: relative;
+}
+
+.editium-editor img.resizable:hover,
+.editium-editor img.resizable:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.editium-editor img.resizing {
+  border-color: #007bff;
+  opacity: 0.8;
+}
+
+/* Image wrapper for alignment */
+.editium-image-wrapper {
+  margin: 10px 0;
+  display: flex;
+  position: relative;
+}
+
+.editium-image-wrapper.align-left {
+  justify-content: flex-start;
+}
+
+.editium-image-wrapper.align-center {
+  justify-content: center;
+}
+
+.editium-image-wrapper.align-right {
+  justify-content: flex-end;
+}
+
+/* Image toolbar that appears on hover/selection */
+.editium-image-toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: none;
+  gap: 4px;
+  z-index: 10;
+}
+
+.editium-image-wrapper:hover .editium-image-toolbar,
+.editium-image-wrapper.selected .editium-image-toolbar {
+  display: flex;
+}
+
+.editium-image-toolbar-group {
+  display: flex;
+  gap: 4px;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.editium-image-toolbar button {
+  padding: 4px 8px;
+  background-color: transparent;
+  border: none;
+  border-radius: 2px;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editium-image-toolbar button:hover {
+  background-color: #f9fafb;
+}
+
+.editium-image-toolbar button.active {
+  background-color: #e0f2fe;
+}
+
+.editium-editor hr {
+  border: none;
+  border-top: 2px solid #dee2e6;
+  margin: 2em 0;
+}
+
+.editium-editor table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.editium-editor table th,
+.editium-editor table td {
+  border: 1px solid #dee2e6;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.editium-editor table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.editium-editor table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+/* Search highlighting */
+.editium-search-match {
+  background-color: #ffeb3b;
+  color: #000000;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.editium-search-current {
+  background-color: #ff9800;
+  color: #ffffff;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+/* Find & Replace Panel */
+.editium-find-replace {
+  background-color: #f9fafb;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.editium-find-replace-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.editium-find-replace-row:last-child {
+  margin-bottom: 0;
+}
+
+.editium-find-input,
+.editium-replace-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.editium-find-input:focus,
+.editium-replace-input:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.editium-find-replace button {
+  padding: 6px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+}
+
+.editium-find-replace button:hover {
+  background-color: #e9ecef;
+}
+
+.editium-match-count {
+  font-size: 14px;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.editium-btn-prev,
+.editium-btn-next {
+  min-width: 32px;
+}
+
+.editium-btn-close {
+  background-color: transparent;
+  border: none;
+  font-size: 18px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.editium-btn-close:hover {
+  color: #dc3545;
+}
+
+/* Word count */
+.editium-word-count {
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #ccc;
+  border-radius: 0 0 4px 4px;
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.editium-word-count strong {
+  color: #000;
+  font-weight: 500;
+}
+
+/* Modal */
+.editium-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.editium-modal-content {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 800px;
+  max-height: 90vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editium-modal-content.editium-preview {
+  max-width: 1200px;
+}
+
+.editium-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editium-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #222f3e;
+}
+
+.editium-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.editium-modal-close:hover {
+  background-color: #f8f9fa;
+  color: #dc3545;
+}
+
+.editium-modal-body {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+}
+
+.editium-modal-body pre {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.editium-modal-body code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #222f3e;
+}
+
+.editium-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.editium-btn-copy {
+  padding: 8px 16px;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.15s ease;
+}
+
+.editium-btn-copy:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* Word count */
+.editium-word-count {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #ccc;
+  font-size: 12px;
+  color: #6c757d;
+  border-radius: 0 0 4px 4px;
+}
+
+.editium-word-count-stats {
+  text-align: left;
+  display: flex;
+  gap: 16px;
+}
+
+.editium-word-count-branding {
+  text-align: right;
+  color: #6c757d;
+}
+
+.editium-word-count-branding .editium-brand {
+  color: #4f88f7;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .editium-toolbar {
+    padding: 8px;
+    gap: 2px;
+  }
+
+  .editium-toolbar-button {
+    padding: 5px 8px;
+    min-width: 28px;
+    min-height: 28px;
+    font-size: 13px;
+  }
+
+  .editium-editor {
+    padding: 15px;
+    font-size: 15px;
+  }
+
+  .editium-modal-content {
+    max-width: 95%;
+  }
+}
+
+/* Print styles */
+@media print {
+  .editium-toolbar,
+  .editium-word-count,
+  .editium-find-replace {
+    display: none;
+  }
+
+  .editium-wrapper {
+    border: none;
+  }
+
+  .editium-editor {
+    padding: 0;
+  }
+}
