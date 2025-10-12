@@ -359,13 +359,13 @@ export const insertTable = (editor: Editor, rows: number = 3, cols: number = 3):
     children: tableRows,
   };
 
-  Transforms.insertNodes(editor, table);
-  
-  // Insert a paragraph after the table
-  Transforms.insertNodes(editor, {
+  const paragraph: any = {
     type: 'paragraph',
     children: [{ text: '' }],
-  });
+  };
+
+  // Insert both table and paragraph at once
+  Transforms.insertNodes(editor, [table, paragraph]);
 };
 
 // Check if we're currently in a table
@@ -747,11 +747,14 @@ const serializeNode = (node: CustomElement | LinkElement | ImageElement | Custom
         tableNode.align === 'center' ? 'auto' :
         tableNode.align === 'right' ? '0' : 'auto'
       };` : '';
-      return `<table style="border-collapse: collapse; width: 100%; margin-top: 16px; margin-bottom: 16px;${tableAlignStyle}">${children}</table>`;
+      const tableWidthStyle = tableNode.width ? ` width: ${tableNode.width}px; max-width: 100%;` : ' width: 100%;';
+      return `<table style="border-collapse: collapse;${tableWidthStyle} margin-top: 16px; margin-bottom: 16px;${tableAlignStyle}">${children}</table>`;
     case 'table-row':
       return `<tr>${children}</tr>`;
     case 'table-cell':
-      return `<td style="border: 1px solid #ddd; padding: 8px;">${children}</td>`;
+      const cellNode = elementNode as any;
+      const cellAlignStyle = cellNode.align ? ` text-align: ${cellNode.align};` : '';
+      return `<td style="border: 1px solid #ddd; padding: 8px;${cellAlignStyle}">${children}</td>`;
     case 'image':
       const imageNode = elementNode as ImageElement;
       const altAttr = imageNode.alt ? ` alt="${escapeHtml(imageNode.alt)}"` : ' alt="Image"';

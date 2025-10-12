@@ -34,7 +34,7 @@ import { FormatType, BlockType, ToolbarItem, AlignmentType, LinkElement, ImageEl
 interface ToolbarProps {
   items: ToolbarItem[];
   className?: string;
-  onViewOutput?: (type: 'html' | 'json') => void;
+  onViewOutput?: (type: 'html' | 'json' | 'preview') => void;
   onEditLink?: (linkData: { url: string; title?: string; target?: '_blank' | '_self'; text: string }) => void;
   searchQuery?: string;
   searchMatches?: Array<{ path: any; offset: number; text: string }>;
@@ -1338,6 +1338,18 @@ const Toolbar: React.FC<ToolbarProps> = ({
             trigger={<span>View</span>}
             title="View Output"
           >
+            <DropdownItem
+              active={false}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                if (onViewOutput) {
+                  onViewOutput('preview');
+                }
+              }}
+              icon={<ArrowTopRightOnSquareIcon style={{ width: '16px', height: '16px' }} />}
+            >
+              Preview
+            </DropdownItem>
             <DropdownItem
               active={false}
               onMouseDown={(event) => {

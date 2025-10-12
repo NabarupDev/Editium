@@ -87,6 +87,42 @@ const parseInitialValue = (initialValue?: string | CustomElement[]): CustomEleme
   return initialValue.length > 0 ? initialValue : defaultInitialValue;
 };
 
+// Custom editor plugin to normalize tables
+const withTables = (editor: any) => {
+  const { normalizeNode } = editor;
+
+  editor.normalizeNode = (entry: any) => {
+    const [node, path] = entry;
+
+    // If this is a table, ensure it only contains table-row children
+    if (SlateElement.isElement(node) && node.type === 'table') {
+      for (const [child, childPath] of Array.from(Editor.nodes(editor, { at: path }))) {
+        if (childPath.length === path.length + 1 && SlateElement.isElement(child) && child.type !== 'table-row') {
+          // Remove any non-table-row children from table
+          Transforms.removeNodes(editor, { at: childPath });
+          return;
+        }
+      }
+    }
+
+    // If this is a table-row, ensure it only contains table-cell children
+    if (SlateElement.isElement(node) && node.type === 'table-row') {
+      for (const [child, childPath] of Array.from(Editor.nodes(editor, { at: path }))) {
+        if (childPath.length === path.length + 1 && SlateElement.isElement(child) && child.type !== 'table-cell') {
+          // Remove any non-table-cell children from table-row
+          Transforms.removeNodes(editor, { at: childPath });
+          return;
+        }
+      }
+    }
+
+    // Fall back to the original `normalizeNode`
+    normalizeNode(entry);
+  };
+
+  return editor;
+};
+
 const Editium: React.FC<EditiumProps> = ({
   initialValue,
   onChange,
@@ -103,9 +139,9 @@ const Editium: React.FC<EditiumProps> = ({
 }) => {
   // Parse toolbar configuration - support 'all' keyword
   const toolbarItems = toolbar === 'all' ? ALL_TOOLBAR_ITEMS : toolbar;
-  const editor = useMemo(() => withHistory(withReact(createEditor())), []);
+  const editor = useMemo(() => withTables(withHistory(withReact(createEditor()))), []);
   const [value, setValue] = useState<CustomElement[]>(() => parseInitialValue(initialValue));
-  const [showOutputModal, setShowOutputModal] = useState<'html' | 'json' | null>(null);
+  const [showOutputModal, setShowOutputModal] = useState<'html' | 'json' | 'preview' | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [showLinkPopup, setShowLinkPopup] = useState(false);
   const [linkPopupPosition, setLinkPopupPosition] = useState({ x: 0, y: 0 });
@@ -880,11 +916,12 @@ const Editium: React.FC<EditiumProps> = ({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ margin: 0, color: '#111827', fontSize: '24px', fontWeight: '600' }}>
-                {showOutputModal === 'html' ? 'HTML Output' : 'JSON Output'}
+                {showOutputModal === 'html' ? 'HTML Output' : showOutputModal === 'json' ? 'JSON Output' : 'Preview'}
               </h2>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button
-                  onClick={handleCopy}
+                {showOutputModal !== 'preview' && (
+                  <button
+                    onClick={handleCopy}
                   style={{
                     backgroundColor: copySuccess ? '#10b981' : '#3b82f6',
                     color: '#ffffff',
@@ -927,6 +964,7 @@ const Editium: React.FC<EditiumProps> = ({
                     </>
                   )}
                 </button>
+                )}
                 <button
                   onClick={() => {
                     setShowOutputModal(null);
@@ -951,30 +989,43 @@ const Editium: React.FC<EditiumProps> = ({
             <div style={{ 
               flex: 1, 
               overflow: 'auto',
-              backgroundColor: '#1e293b',
+              backgroundColor: showOutputModal === 'preview' ? '#ffffff' : '#1e293b',
               borderRadius: '6px',
-              border: '1px solid #334155',
+              border: showOutputModal === 'preview' ? '1px solid #e5e7eb' : '1px solid #334155',
+              padding: showOutputModal === 'preview' ? '20px' : '0',
             }}>
-              <pre
-                style={{
-                  margin: 0,
-                  padding: '20px',
-                  fontSize: '13px',
-                  lineHeight: '1.6',
-                  fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-                  color: '#e2e8f0',
-                  overflowX: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                }}
-              >
-                <code>
-                  {showOutputModal === 'html' 
-                    ? formatHtml(serializeToHtml(editor.children as CustomElement[]))
-                    : JSON.stringify(editor.children, null, 2)
-                  }
-                </code>
-              </pre>
+              {showOutputModal === 'preview' ? (
+                <div
+                  dangerouslySetInnerHTML={{ __html: serializeToHtml(editor.children as CustomElement[]) }}
+                  style={{
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontSize: '16px',
+                    lineHeight: '1.6',
+                    color: '#111827',
+                  }}
+                />
+              ) : (
+                <pre
+                  style={{
+                    margin: 0,
+                    padding: '20px',
+                    fontSize: '13px',
+                    lineHeight: '1.6',
+                    fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                    color: '#e2e8f0',
+                    overflowX: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  <code>
+                    {showOutputModal === 'html' 
+                      ? formatHtml(serializeToHtml(editor.children as CustomElement[]))
+                      : JSON.stringify(editor.children, null, 2)
+                    }
+                  </code>
+                </pre>
+              )}
             </div>
           </div>
         </div>

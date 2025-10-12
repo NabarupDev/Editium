@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSlateStatic, useSelected, useFocused, ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
 import { 
@@ -23,7 +23,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({ element, attribu
   const selected = useSelected();
   const focused = useFocused();
   const [showControls, setShowControls] = useState(false);
-  const [tableWidth, setTableWidth] = useState<number | null>(null);
+  const [tableWidth, setTableWidth] = useState<number | null>(element.width || null);
   const [isResizing, setIsResizing] = useState(false);
   const tableRef = useRef<HTMLTableElement>(null);
 
@@ -53,6 +53,22 @@ export const TableComponent: React.FC<TableComponentProps> = ({ element, attribu
 
   const handleAlign = (alignment: AlignmentType) => {
     setTableAlignment(editor, alignment);
+  };
+
+  // Save width to element when it changes
+  const updateTableWidth = (width: number) => {
+    setTableWidth(width);
+    try {
+      const path = ReactEditor.findPath(editor as ReactEditor, element);
+      Transforms.setNodes(
+        editor,
+        { width } as Partial<TableElement>,
+        { at: path }
+      );
+    } catch (error) {
+      // Element might not be in the editor yet
+      console.warn('Could not update table width:', error);
+    }
   };
 
   return (
@@ -296,15 +312,19 @@ export const TableComponent: React.FC<TableComponentProps> = ({ element, attribu
               setIsResizing(true);
               const startX = e.clientX;
               const startWidth = tableRef.current?.offsetWidth || 0;
+              let finalWidth = startWidth;
 
               const handleMouseMove = (moveEvent: MouseEvent) => {
                 const diff = moveEvent.clientX - startX;
                 const newWidth = Math.max(200, startWidth + diff);
+                finalWidth = newWidth;
                 setTableWidth(newWidth);
               };
 
               const handleMouseUp = () => {
                 setIsResizing(false);
+                // Save the final width to the element
+                updateTableWidth(finalWidth);
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
               };
@@ -352,7 +372,37 @@ interface TableCellComponentProps {
   children: any;
 }
 
-export const TableCellComponent: React.FC<TableCellComponentProps> = ({ attributes, children }) => {
+export const TableCellComponent: React.FC<TableCellComponentProps> = ({ element, attributes, children }) => {
+  const editor = useSlateStatic();
+  const selected = useSelected();
+  const focused = useFocused();
+  const [showAlignMenu, setShowAlignMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowAlignMenu(false);
+      }
+    };
+
+    if (showAlignMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showAlignMenu]);
+
+  const handleCellAlign = (alignment: AlignmentType) => {
+    const path = ReactEditor.findPath(editor as ReactEditor, element);
+    Transforms.setNodes(
+      editor,
+      { align: alignment } as Partial<TableCellElement>,
+      { at: path }
+    );
+    setShowAlignMenu(false);
+  };
+
   return (
     <td
       {...attributes}
@@ -361,8 +411,129 @@ export const TableCellComponent: React.FC<TableCellComponentProps> = ({ attribut
         padding: '8px 12px',
         minWidth: '100px',
         position: 'relative',
+        textAlign: element.align || 'left',
       }}
     >
+      {/* Cell alignment controls */}
+      {selected && focused && (
+        <div
+          ref={menuRef}
+          contentEditable={false}
+          style={{
+            position: 'absolute',
+            top: '4px',
+            right: '4px',
+            zIndex: 10,
+          }}
+        >
+          <button
+            onClick={() => setShowAlignMenu(!showAlignMenu)}
+            style={{
+              padding: '2px 6px',
+              border: '1px solid #e5e7eb',
+              borderRadius: '3px',
+              backgroundColor: '#fff',
+              cursor: 'pointer',
+              fontSize: '11px',
+              color: '#6b7280',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#fff')}
+            title="Align cell content"
+          >
+            <Bars3BottomLeftIcon style={{ width: '12px', height: '12px' }} />
+          </button>
+          
+          {showAlignMenu && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: '0',
+                marginTop: '4px',
+                backgroundColor: '#fff',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                padding: '4px',
+                display: 'flex',
+                gap: '2px',
+                minWidth: '120px',
+              }}
+            >
+              <button
+                onClick={() => handleCellAlign('left')}
+                style={{
+                  padding: '4px 8px',
+                  border: 'none',
+                  borderRadius: '3px',
+                  backgroundColor: element.align === 'left' || !element.align ? '#e0e7ff' : 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onMouseOver={(e) => {
+                  if (element.align !== 'left' && element.align) e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = element.align === 'left' || !element.align ? '#e0e7ff' : 'transparent';
+                }}
+                title="Align Left"
+              >
+                <Bars3BottomLeftIcon style={{ width: '16px', height: '16px' }} />
+              </button>
+              <button
+                onClick={() => handleCellAlign('center')}
+                style={{
+                  padding: '4px 8px',
+                  border: 'none',
+                  borderRadius: '3px',
+                  backgroundColor: element.align === 'center' ? '#e0e7ff' : 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onMouseOver={(e) => {
+                  if (element.align !== 'center') e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = element.align === 'center' ? '#e0e7ff' : 'transparent';
+                }}
+                title="Align Center"
+              >
+                <Bars3Icon style={{ width: '16px', height: '16px' }} />
+              </button>
+              <button
+                onClick={() => handleCellAlign('right')}
+                style={{
+                  padding: '4px 8px',
+                  border: 'none',
+                  borderRadius: '3px',
+                  backgroundColor: element.align === 'right' ? '#e0e7ff' : 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onMouseOver={(e) => {
+                  if (element.align !== 'right') e.currentTarget.style.backgroundColor = '#f3f4f6';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = element.align === 'right' ? '#e0e7ff' : 'transparent';
+                }}
+                title="Align Right"
+              >
+                <Bars3BottomRightIcon style={{ width: '16px', height: '16px' }} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       {children}
     </td>
   );

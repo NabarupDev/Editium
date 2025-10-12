@@ -79,6 +79,7 @@ export interface ImageElement extends BaseElement {
 export interface TableElement extends BaseElement {
   type: 'table';
   align?: AlignmentType;
+  width?: number;
   children: TableRowElement[];
 }
 
@@ -89,6 +90,7 @@ export interface TableRowElement extends BaseElement {
 
 export interface TableCellElement extends BaseElement {
   type: 'table-cell';
+  align?: AlignmentType;
   children: (CustomElement | CustomText)[];
 }
 
