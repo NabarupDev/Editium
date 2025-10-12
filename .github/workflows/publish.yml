@@ -1,11 +1,11 @@
 name: Publish to npm
 
 # Temporarily disabled while package is in development mode
-# Remove the 'on: {}' line and uncomment the section below when ready to publish
-on: {}
-# on:
-#   release:
-#     types: [created]
+# Add the 'on: {}' line and comment the section below when ready to unpublish
+# on: {}
+on:
+  release:
+    types: [created]
 
 jobs:
   publish:

@@ -1,0 +1,55 @@
+import { Editor, Path } from 'slate';
+import { CustomElement, FormatType, BlockType, LinkElement, AlignmentType, ImageElement } from './types';
+export declare const isAlignmentActive: (editor: Editor, alignment: AlignmentType) => boolean;
+export declare const toggleAlignment: (editor: Editor, alignment: AlignmentType) => void;
+export declare const indentListItem: (editor: Editor) => void;
+export declare const outdentListItem: (editor: Editor) => void;
+export declare const isMarkActive: (editor: Editor, format: FormatType) => boolean;
+export declare const isBlockActive: (editor: Editor, format: BlockType) => boolean;
+export declare const toggleMark: (editor: Editor, format: FormatType) => void;
+export declare const applyColor: (editor: Editor, color: string | null) => void;
+export declare const applyBackgroundColor: (editor: Editor, color: string | null) => void;
+export declare const getActiveColor: (editor: Editor) => string | null;
+export declare const getActiveBackgroundColor: (editor: Editor) => string | null;
+export declare const toggleBlock: (editor: Editor, format: BlockType) => void;
+export declare const insertHorizontalRule: (editor: Editor) => void;
+export declare const insertImage: (editor: Editor, url: string, alt?: string, width?: number) => void;
+export declare const isValidImageUrl: (url: string) => boolean;
+export declare const insertLink: (editor: Editor, url: string, title?: string, target?: "_blank" | "_self") => void;
+export declare const isLinkActive: (editor: Editor) => boolean;
+export declare const getLinkAtCursor: (editor: Editor) => LinkElement | null;
+export declare const unwrapLink: (editor: Editor) => void;
+export declare const wrapLink: (editor: Editor, url: string, title?: string, target?: "_blank" | "_self") => void;
+export declare const insertTable: (editor: Editor, rows?: number, cols?: number) => void;
+export declare const isInTable: (editor: Editor) => boolean;
+export declare const addTableRow: (editor: Editor) => void;
+export declare const removeTableRow: (editor: Editor) => void;
+export declare const addTableColumn: (editor: Editor) => void;
+export declare const removeTableColumn: (editor: Editor) => void;
+export declare const setTableAlignment: (editor: Editor, alignment: AlignmentType) => void;
+export declare const findAllMatches: (editor: Editor, searchQuery: string) => Array<{
+    path: Path;
+    offset: number;
+    text: string;
+}>;
+export declare const navigateToMatch: (editor: Editor, match: {
+    path: Path;
+    offset: number;
+    text: string;
+}) => void;
+export declare const replaceMatch: (editor: Editor, match: {
+    path: Path;
+    offset: number;
+    text: string;
+}, replaceText: string) => void;
+export declare const replaceAllMatches: (editor: Editor, matches: Array<{
+    path: Path;
+    offset: number;
+    text: string;
+}>, replaceText: string) => void;
+export declare const serializeToHtml: (nodes: (CustomElement | LinkElement | ImageElement)[]) => string;
+export declare const defaultInitialValue: CustomElement[];
+export declare const getTextContent: (nodes: any[]) => string;
+export declare const countWords: (text: string) => number;
+export declare const countCharacters: (text: string) => number;
+export declare const countCharactersNoSpaces: (text: string) => number;
