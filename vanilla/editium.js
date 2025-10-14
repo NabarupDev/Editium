@@ -24,6 +24,8 @@ class Editium {
     this.historyIndex = -1;
     this.maxHistory = 50;
     this.openDropdown = null;
+    this.linkPopup = null;
+    this.selectedLink = null;
     
     if (!this.container) {
       throw new Error('Container element is required');
@@ -42,6 +44,9 @@ class Editium {
     
     // Make any existing images resizable
     this.makeExistingImagesResizable();
+    
+    // Make any existing links non-editable
+    this.makeExistingLinksNonEditable();
     
     this.saveState();
   }
@@ -470,8 +475,15 @@ class Editium {
   }
   
   showLinkModal() {
+    // Save the current selection/cursor position BEFORE opening modal
+    this.editor.focus();
     const selection = window.getSelection();
     const selectedText = selection.toString();
+    let savedRange = null;
+    
+    if (selection.rangeCount > 0) {
+      savedRange = selection.getRangeAt(0).cloneRange();
+    }
     
     const modal = this.createModal('Insert Link', `
       <div style="margin-bottom: 16px;">
@@ -509,9 +521,18 @@ class Editium {
         return false;
       }
       
+      // Restore the saved selection before inserting the link
+      if (savedRange) {
+        this.editor.focus();
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+      }
+      
       const link = document.createElement('a');
       link.href = url;
       link.textContent = text || url;
+      link.contentEditable = 'false';
       if (title) link.title = title;
       if (target) link.target = '_blank';
       
@@ -520,6 +541,17 @@ class Editium {
         const range = sel.getRangeAt(0);
         range.deleteContents();
         range.insertNode(link);
+        
+        // Add a space after the link for continued typing
+        const space = document.createTextNode('\u00A0');
+        range.setStartAfter(link);
+        range.insertNode(space);
+        
+        // Move cursor after the space
+        range.setStartAfter(space);
+        range.setEndAfter(space);
+        sel.removeAllRanges();
+        sel.addRange(range);
       }
       
       this.saveState();
@@ -529,6 +561,203 @@ class Editium {
     
     document.body.appendChild(modal);
     document.getElementById('link-url').focus();
+  }
+  
+  showLinkPopup(linkElement) {
+    this.selectedLink = linkElement;
+    
+    // Close existing popup if any
+    this.closeLinkPopup();
+    
+    const rect = linkElement.getBoundingClientRect();
+    
+    this.linkPopup = document.createElement('div');
+    this.linkPopup.className = 'editium-link-popup';
+    this.linkPopup.style.cssText = `
+      position: fixed;
+      top: ${rect.bottom + window.scrollY + 5}px;
+      left: ${rect.left + window.scrollX}px;
+      background-color: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      min-width: 200px;
+      overflow: hidden;
+      z-index: 10000;
+    `;
+    
+    this.linkPopup.innerHTML = `
+      <div style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; background-color: #f9fafb;">
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Link URL:</div>
+        <div style="font-size: 13px; color: #111827; word-break: break-all; font-family: monospace;">
+          ${this.escapeHtml(linkElement.href)}
+        </div>
+      </div>
+      <button class="editium-link-popup-btn editium-link-open" style="
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        background-color: transparent;
+        color: #374151;
+        font-size: 14px;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+      ">
+        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+        Open Link
+      </button>
+      <button class="editium-link-popup-btn editium-link-edit" style="
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        background-color: transparent;
+        color: #374151;
+        font-size: 14px;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+      ">
+        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        Edit Link
+      </button>
+      <button class="editium-link-popup-btn editium-link-remove" style="
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        border-top: 1px solid #e5e7eb;
+        background-color: transparent;
+        color: #ef4444;
+        font-size: 14px;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+      ">
+        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        Remove Link
+      </button>
+    `;
+    
+    // Add hover effects
+    const buttons = this.linkPopup.querySelectorAll('.editium-link-popup-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        if (btn.classList.contains('editium-link-remove')) {
+          btn.style.backgroundColor = '#fef2f2';
+        } else {
+          btn.style.backgroundColor = '#f3f4f6';
+        }
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.backgroundColor = 'transparent';
+      });
+    });
+    
+    // Add click handlers
+    this.linkPopup.querySelector('.editium-link-open').addEventListener('click', () => {
+      window.open(linkElement.href, linkElement.target || '_self');
+      this.closeLinkPopup();
+    });
+    
+    this.linkPopup.querySelector('.editium-link-edit').addEventListener('click', () => {
+      this.closeLinkPopup();
+      this.editLink(linkElement);
+    });
+    
+    this.linkPopup.querySelector('.editium-link-remove').addEventListener('click', () => {
+      this.removeLink(linkElement);
+      this.closeLinkPopup();
+    });
+    
+    document.body.appendChild(this.linkPopup);
+  }
+  
+  closeLinkPopup() {
+    if (this.linkPopup) {
+      this.linkPopup.remove();
+      this.linkPopup = null;
+    }
+    this.selectedLink = null;
+  }
+  
+  editLink(linkElement) {
+    // Save the link element for later update
+    const savedLinkElement = linkElement;
+    
+    const modal = this.createModal('Edit Link', `
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-size: 14px; color: #333;">Link Text:</label>
+        <input type="text" id="link-text" value="${this.escapeHtml(linkElement.textContent)}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;">
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-size: 14px; color: #333;">URL: *</label>
+        <input type="text" id="link-url" value="${this.escapeHtml(linkElement.href)}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;">
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-size: 14px; color: #333;">Title (optional):</label>
+        <input type="text" id="link-title" value="${this.escapeHtml(linkElement.title || '')}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 14px;">
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: inline-flex; align-items: center; font-size: 14px; color: #333; cursor: pointer;">
+          <input type="checkbox" id="link-target" ${linkElement.target === '_blank' ? 'checked' : ''} style="margin-right: 8px;"> Open in new tab
+        </label>
+      </div>
+    `, () => {
+      const url = document.getElementById('link-url').value.trim();
+      const text = document.getElementById('link-text').value.trim();
+      const title = document.getElementById('link-title').value.trim();
+      const target = document.getElementById('link-target').checked;
+      
+      if (!url) {
+        alert('URL is required');
+        return false;
+      }
+      
+      try {
+        new URL(url);
+      } catch {
+        alert('Please enter a valid URL');
+        return false;
+      }
+      
+      // Update the link
+      savedLinkElement.href = url;
+      savedLinkElement.textContent = text || url;
+      savedLinkElement.title = title;
+      savedLinkElement.target = target ? '_blank' : '';
+      savedLinkElement.contentEditable = 'false';
+      
+      this.saveState();
+      this.triggerChange();
+      return true;
+    });
+    
+    document.body.appendChild(modal);
+    document.getElementById('link-url').focus();
+  }
+  
+  removeLink(linkElement) {
+    // Replace the link with its text content
+    const textNode = document.createTextNode(linkElement.textContent);
+    linkElement.parentNode.replaceChild(textNode, linkElement);
+    
+    this.saveState();
+    this.triggerChange();
   }
   
   showImageModal() {
@@ -1791,6 +2020,7 @@ class Editium {
   
   attachEventListeners() {
     this.editor.addEventListener('input', () => {
+      this.makeExistingLinksNonEditable();
       this.saveState();
       this.triggerChange();
       this.updateWordCount();
@@ -1806,6 +2036,23 @@ class Editium {
       } else if (e.ctrlKey && e.key === 'u') {
         e.preventDefault();
         this.execCommand('underline');
+      } else if (e.ctrlKey && e.key === 'k') {
+        // Ctrl+K to edit link if cursor is inside a link
+        e.preventDefault();
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          let node = selection.anchorNode;
+          // Find the parent link element if we're inside one
+          while (node && node !== this.editor) {
+            if (node.nodeType === 1 && node.tagName === 'A') {
+              this.editLink(node);
+              return;
+            }
+            node = node.parentNode;
+          }
+        }
+        // If not in a link, open the insert link modal
+        this.showLinkModal();
       } else if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         this.undo();
@@ -1818,15 +2065,67 @@ class Editium {
       } else if (e.key === 'Escape' && this.isFullscreen) {
         e.preventDefault();
         this.toggleFullscreen();
+      } else if (e.key === 'Escape' && this.linkPopup) {
+        // Close link popup with Escape key
+        e.preventDefault();
+        this.closeLinkPopup();
       }
     });
     
     this.editor.addEventListener('mouseup', () => this.updateToolbarStates());
-       this.editor.addEventListener('keyup', () => this.updateToolbarStates());
+    this.editor.addEventListener('keyup', () => this.updateToolbarStates());
+    
+    // Prevent direct editing of link text - force users to use the edit modal
+    this.editor.addEventListener('beforeinput', (e) => {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        let node = selection.anchorNode;
+        
+        // Check if we're inside a link element
+        while (node && node !== this.editor) {
+          if (node.nodeType === 1 && node.tagName === 'A') {
+            // Block any input that would modify link content
+            if (e.inputType.startsWith('delete') || 
+                e.inputType.startsWith('insert') || 
+                e.inputType.startsWith('format') ||
+                e.inputType === 'historyUndo' ||
+                e.inputType === 'historyRedo') {
+              e.preventDefault();
+              // Show a brief visual feedback
+              node.style.backgroundColor = 'rgba(255, 152, 0, 0.2)';
+              setTimeout(() => {
+                node.style.backgroundColor = '';
+              }, 200);
+              return;
+            }
+          }
+          node = node.parentNode;
+        }
+      }
+    });
+    
+    // Handle link clicks - always prevent default and show popup
+    this.editor.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') {
+        e.preventDefault();
+        this.showLinkPopup(e.target);
+      }
+    });
+    
+    // Prevent text selection in links
+    this.editor.addEventListener('mousedown', (e) => {
+      if (e.target.tagName === 'A') {
+        e.preventDefault();
+      }
+    });
     
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.editium-dropdown')) {
         this.closeDropdown();
+      }
+      // Close link popup when clicking outside
+      if (this.linkPopup && !e.target.closest('.editium-link-popup') && !e.target.closest('a')) {
+        this.closeLinkPopup();
       }
     });
   }
@@ -2203,6 +2502,13 @@ class Editium {
         
         this.makeImageResizable(img);
       }
+    });
+  }
+  
+  makeExistingLinksNonEditable() {
+    const links = this.editor.querySelectorAll('a');
+    links.forEach(link => {
+      link.contentEditable = 'false';
     });
   }
   

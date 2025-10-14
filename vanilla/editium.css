@@ -295,10 +295,36 @@
   color: #007bff;
   text-decoration: underline;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+  display: inline-block;
 }
 
 .editium-editor a:hover {
   color: #0056b3;
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* Visual hint for clickable links */
+.editium-editor a::after {
+  content: '';
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.editium-editor a:hover::after {
+  background-color: rgba(0, 123, 255, 0.4);
 }
 
 .editium-editor img {

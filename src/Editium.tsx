@@ -194,6 +194,21 @@ const Editium: React.FC<EditiumProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
+  // Block background scrolling when in fullscreen mode
+  useEffect(() => {
+    if (isFullscreen) {
+      // Store original overflow value
+      const originalOverflow = document.body.style.overflow;
+      // Block scrolling
+      document.body.style.overflow = 'hidden';
+      
+      // Restore original overflow on cleanup
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isFullscreen]);
+
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     // Handle Delete/Backspace for selected images
@@ -618,6 +633,10 @@ const Editium: React.FC<EditiumProps> = ({
     overflow: 'auto',
     border: 'none',
     borderRadius: 0,
+    // Remove height constraints in fullscreen mode
+    height: 'auto',
+    minHeight: 'auto',
+    maxHeight: 'none',
   } : editorStyle;
 
   return (
