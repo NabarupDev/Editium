@@ -135,7 +135,10 @@ const Editium: React.FC<EditiumProps> = ({
   searchQuery: externalSearchQuery,
   searchMatches: externalSearchMatches,
   currentMatchIndex: externalCurrentMatchIndex,
-  showWordCount = false,
+  showWordCount = true,
+  height = '200px',
+  minHeight = '150px',
+  maxHeight = '250px',
 }) => {
   // Parse toolbar configuration - support 'all' keyword
   const toolbarItems = toolbar === 'all' ? ALL_TOOLBAR_ITEMS : toolbar;
@@ -580,16 +583,19 @@ const Editium: React.FC<EditiumProps> = ({
   const editorStyle: React.CSSProperties = {
     border: '1px solid #ccc',
     borderTop: 'none',
-    borderRadius: toolbar.length > 0 ? (showWordCount ? '0' : '0 0 4px 4px') : (showWordCount ? '4px 4px 0 0' : '4px'),
-    borderBottom: showWordCount ? 'none' : '1px solid #ccc',
+    borderRadius: toolbar.length > 0 ? '0' : '4px 4px 0 0',
+    borderBottom: 'none',
     padding: '16px',
-    minHeight: '200px',
+    height: typeof height === 'number' ? `${height}px` : height,
+    minHeight: typeof minHeight === 'number' ? `${minHeight}px` : minHeight,
+    maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     fontSize: '14px',
     lineHeight: '1.6',
     outline: 'none',
     backgroundColor: '#fff',
     position: 'relative',
+    overflow: 'auto',
     ...style,
   };
 
@@ -621,6 +627,27 @@ const Editium: React.FC<EditiumProps> = ({
           [data-slate-editor] {
             position: relative;
             min-height: inherit;
+            height: 100%;
+          }
+          
+          /* Custom scrollbar styling for better UX */
+          [data-slate-editor]::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+          }
+          
+          [data-slate-editor]::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+          }
+          
+          [data-slate-editor]::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+          }
+          
+          [data-slate-editor]::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
           }
           
           [data-slate-editor] [data-slate-placeholder] {
@@ -822,24 +849,24 @@ const Editium: React.FC<EditiumProps> = ({
         />
       </Slate>
       
-      {/* Word and Character Counter */}
-      {showWordCount && (
-        <div style={{
-          padding: '8px 12px',
-          backgroundColor: '#f9fafb',
-          borderTop: '1px solid #e5e7eb',
-          borderLeft: isFullscreen ? 'none' : '1px solid #ccc',
-          borderRight: isFullscreen ? 'none' : '1px solid #ccc',
-          borderBottom: isFullscreen ? 'none' : '1px solid #ccc',
-          borderRadius: isFullscreen ? '0' : '0 0 4px 4px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '20px',
-          fontSize: '12px',
-          color: '#6b7280',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        }}>
+      {/* Word and Character Counter / Branding Footer */}
+      <div style={{
+        padding: '8px 12px',
+        backgroundColor: '#f9fafb',
+        borderTop: '1px solid #e5e7eb',
+        borderLeft: isFullscreen ? 'none' : '1px solid #ccc',
+        borderRight: isFullscreen ? 'none' : '1px solid #ccc',
+        borderBottom: isFullscreen ? 'none' : '1px solid #ccc',
+        borderRadius: isFullscreen ? '0' : '0 0 4px 4px',
+        display: 'flex',
+        justifyContent: showWordCount ? 'space-between' : 'flex-end',
+        alignItems: 'center',
+        gap: '20px',
+        fontSize: '12px',
+        color: '#6b7280',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      }}>
+        {showWordCount && (
           <div style={{ display: 'flex', gap: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontWeight: '500', color: '#374151' }}>Words:</span>
@@ -854,31 +881,31 @@ const Editium: React.FC<EditiumProps> = ({
               <span style={{ fontWeight: '600', color: '#111827' }}>{charCountNoSpaces.toLocaleString()}</span>
             </div>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '6px',
-            color: '#9ca3af',
-            fontSize: '11px',
-          }}>
-            <span>Built with</span>
-            <span 
-              style={{ 
-                fontWeight: '600', 
-                color: '#3b82f6',
-                letterSpacing: '0.5px',
-                cursor: 'pointer',
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                window.open('https://www.npmjs.com/package/editium', '_blank');
-              }}
-            >
-              Editium
-            </span>
-          </div>
+        )}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '6px',
+          color: '#9ca3af',
+          fontSize: '11px',
+        }}>
+          <span>Built with</span>
+          <span 
+            style={{ 
+              fontWeight: '600', 
+              color: '#3b82f6',
+              letterSpacing: '0.5px',
+              cursor: 'pointer',
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              window.open('https://www.npmjs.com/package/editium', '_blank');
+            }}
+          >
+            Editium
+          </span>
         </div>
-      )}
+      </div>
       
       {showOutputModal && (
         <div

@@ -212,6 +212,37 @@ function EditorWithImages() {
 }
 ```
 
+### Custom Height Configuration
+
+Control the editor's height for different use cases:
+
+**Fixed Height:**
+```tsx
+<Editium
+  toolbar={['bold', 'italic', 'underline']}
+  height={400}  // Fixed height of 400px
+  placeholder="Editor with fixed height..."
+/>
+```
+
+**Responsive Height with Min/Max:**
+```tsx
+<Editium
+  toolbar={['bold', 'italic', 'underline', 'link']}
+  minHeight="150px"  // Minimum height
+  maxHeight="500px"  // Maximum height
+  placeholder="Editor grows between 150px and 500px..."
+/>
+```
+
+**Using String Values:**
+```tsx
+<Editium
+  height="60vh"  // Viewport-relative height
+  placeholder="Editor takes 60% of viewport height..."
+/>
+```
+
 ## Output Format
 
 ### HTML Output
@@ -274,6 +305,9 @@ The structured JSON format preserves the complete document structure:
 | `searchMatches` | `Array` | `undefined` | External search matches for controlled search |
 | `currentMatchIndex` | `number` | `undefined` | External current match index for controlled search |
 | `showWordCount` | `boolean` | `false` | Display word and character count |
+| `height` | `string \| number` | `'200px'` | Height for the editor (e.g., '400px' or 400) |
+| `minHeight` | `string \| number` | `'150px'` | Minimum height for the editor |
+| `maxHeight` | `string \| number` | `'250px'` | Maximum height for the editor |
 
 ### Toolbar Items
 
