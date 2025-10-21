@@ -29,6 +29,11 @@
   margin: 0;
 }
 
+/* Block body scroll when in fullscreen mode */
+body.editium-fullscreen-active {
+  overflow: hidden;
+}
+
 /* Toolbar */
 .editium-toolbar {
   display: flex;
@@ -183,6 +188,11 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+/* Fullscreen editor container should allow scrolling */
+.editium-fullscreen .editium-editor-container {
   overflow: auto;
 }
 
@@ -190,13 +200,20 @@
 .editium-editor {
   flex: 1;
   padding: 16px;
-  min-height: 200px;
+  /* Height, min-height, and max-height are set via inline styles from options */
   outline: none;
   font-size: 14px;
   line-height: 1.6;
   color: #000;
   overflow-y: auto;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* In fullscreen mode, ensure editor takes full available space */
+.editium-fullscreen .editium-editor {
+  height: 100% !important;
+  min-height: unset !important;
+  max-height: unset !important;
 }
 
 .editium-editor:empty:before {

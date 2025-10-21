@@ -14,6 +14,11 @@ class Editium {
     this.className = options.className || '';
     this.onImageUpload = options.onImageUpload || null;
     
+    // Height configuration options with defaults
+    this.height = options.height || '200px';
+    this.minHeight = options.minHeight || '150px';
+    this.maxHeight = options.maxHeight || '250px';
+    
     // State
     this.isFullscreen = false;
     this.searchQuery = '';
@@ -74,6 +79,18 @@ class Editium {
     this.editor.className = 'editium-editor';
     this.editor.contentEditable = !this.readOnly;
     this.editor.setAttribute('data-placeholder', this.placeholder);
+    
+    // Apply height, minHeight, maxHeight styles (convert numbers to px strings)
+    if (!this.isFullscreen) {
+      this.editor.style.height = typeof this.height === 'number' ? `${this.height}px` : this.height;
+      this.editor.style.minHeight = typeof this.minHeight === 'number' ? `${this.minHeight}px` : this.minHeight;
+      this.editor.style.maxHeight = typeof this.maxHeight === 'number' ? `${this.maxHeight}px` : this.maxHeight;
+    } else {
+      // Remove height constraints in fullscreen mode
+      this.editor.style.height = 'auto';
+      this.editor.style.minHeight = 'auto';
+      this.editor.style.maxHeight = 'none';
+    }
     
     this.editorContainer.appendChild(this.editor);
     this.wrapper.appendChild(this.editorContainer);
@@ -1242,8 +1259,20 @@ class Editium {
     this.isFullscreen = !this.isFullscreen;
     if (this.isFullscreen) {
       this.wrapper.classList.add('editium-fullscreen');
+      // Block background scroll
+      document.body.classList.add('editium-fullscreen-active');
+      // Remove height constraints in fullscreen mode
+      this.editor.style.height = 'auto';
+      this.editor.style.minHeight = 'auto';
+      this.editor.style.maxHeight = 'none';
     } else {
       this.wrapper.classList.remove('editium-fullscreen');
+      // Restore background scroll
+      document.body.classList.remove('editium-fullscreen-active');
+      // Restore height constraints when exiting fullscreen
+      this.editor.style.height = typeof this.height === 'number' ? `${this.height}px` : this.height;
+      this.editor.style.minHeight = typeof this.minHeight === 'number' ? `${this.minHeight}px` : this.minHeight;
+      this.editor.style.maxHeight = typeof this.maxHeight === 'number' ? `${this.maxHeight}px` : this.maxHeight;
     }
   }
   
@@ -2523,6 +2552,10 @@ class Editium {
   }
   
   destroy() {
+    // Clean up fullscreen state if active
+    if (this.isFullscreen) {
+      document.body.classList.remove('editium-fullscreen-active');
+    }
     this.container.innerHTML = '';
   }
 }

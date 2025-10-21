@@ -113,6 +113,12 @@ const editor = new Editium({
   showWordCount: true,                           // Optional: Show word/character count
   readOnly: false,                               // Optional: Make editor read-only
   className: 'custom-class',                     // Optional: Custom CSS class
+  
+  // Height configuration (can be string or number)
+  height: '300px',                               // Optional: Default '200px' (or number: 300)
+  minHeight: '200px',                            // Optional: Default '150px' (or number: 200)
+  maxHeight: '400px',                            // Optional: Default '250px' (or number: 400)
+  
   onChange: (content) => {                       // Optional: Content change callback
     console.log('Content changed:', content);
   },
@@ -121,6 +127,28 @@ const editor = new Editium({
     const url = await uploadToServer(file);
     return url;
   }
+});
+```
+
+### Height Configuration
+
+You can control the editor's dimensions using these options:
+
+- **`height`**: Sets the default height of the editor (default: `'200px'`)
+- **`minHeight`**: Sets the minimum height before content can shrink (default: `'150px'`)
+- **`maxHeight`**: Sets the maximum height before scrolling appears (default: `'250px'`)
+
+Heights can be specified as:
+- **String**: `'300px'`, `'20rem'`, `'50vh'`, etc.
+- **Number**: `300` (automatically converted to `'300px'`)
+
+Example:
+```javascript
+const editor = new Editium({
+  container: document.getElementById('editor'),
+  height: 400,        // 400px tall
+  minHeight: 200,     // Won't shrink below 200px
+  maxHeight: 600,     // Will scroll after 600px
 });
 ```
 

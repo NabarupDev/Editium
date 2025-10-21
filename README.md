@@ -183,35 +183,6 @@ function EditorWithContent() {
 }
 ```
 
-### With Image Upload Handler
-
-```tsx
-import { Editium } from 'editium';
-
-function EditorWithImages() {
-  const handleImageUpload = async (file) => {
-    // Upload to your server or cloud storage
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-    
-    const data = await response.json();
-    return data.imageUrl; // Return the uploaded image URL
-  };
-
-  return (
-    <Editium
-      onImageUpload={handleImageUpload}
-      toolbar={['bold', 'italic', 'image']}
-    />
-  );
-}
-```
-
 ### Custom Height Configuration
 
 Control the editor's height for different use cases:
@@ -374,48 +345,6 @@ import { Editium, ALL_TOOLBAR_ITEMS } from 'editium';
 // Or customize by filtering
 const customToolbar = ALL_TOOLBAR_ITEMS.filter(item => item !== 'separator');
 <Editium toolbar={customToolbar} />
-```
-
-### Custom Types
-
-```typescript
-interface CustomElement {
-  type: BlockType;
-  url?: string;
-  align?: AlignmentType;
-  children: CustomText[];
-}
-
-interface CustomText {
-  text: string;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  code?: boolean;
-  strikethrough?: boolean;
-  superscript?: boolean;
-  subscript?: boolean;
-  color?: string;
-  backgroundColor?: string;
-}
-
-interface LinkElement {
-  type: 'link';
-  url: string;
-  title?: string;
-  target?: '_blank' | '_self';
-  children: CustomText[];
-}
-
-interface ImageElement {
-  type: 'image';
-  url: string;
-  alt?: string;
-  width?: number;
-  height?: number;
-  align?: AlignmentType;
-  children: CustomText[];
-}
 ```
 
 ## Keyboard Shortcuts
