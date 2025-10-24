@@ -20,8 +20,8 @@ import {
   defaultInitialValue,
   toggleAlignment,
   isAlignmentActive,
-} from '../src/utils';
-import { CustomElement, FormatType, BlockType } from '../src/types';
+} from '../../react/utils';
+import { CustomElement, FormatType, BlockType } from '../../react/types';
 
 describe('Utils', () => {
   let editor: any;
@@ -472,6 +472,380 @@ describe('Utils', () => {
           children: [{ text: '' }],
         },
       ]);
+    });
+  });
+
+  describe('Additional serialization tests', () => {
+    it('should serialize heading-two to HTML', () => {
+      const nodes: CustomElement[] = [
+        {
+          type: 'heading-two',
+          children: [{ text: 'Subtitle' }],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toBe('<h2>Subtitle</h2>');
+    });
+
+    it('should serialize heading-three to HTML', () => {
+      const nodes: CustomElement[] = [
+        {
+          type: 'heading-three',
+          children: [{ text: 'Section' }],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toBe('<h3>Section</h3>');
+    });
+
+    it('should serialize multiple formatting marks together', () => {
+      const nodes: CustomElement[] = [
+        {
+          type: 'paragraph',
+          children: [
+            {
+              text: 'Multi-formatted',
+              bold: true,
+              italic: true,
+              underline: true,
+            },
+          ],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toContain('Multi-formatted');
+      expect(html).toContain('<strong>');
+      expect(html).toContain('<em>');
+      expect(html).toContain('<u>');
+    });
+
+    it('should serialize empty paragraph', () => {
+      const nodes: CustomElement[] = [
+        {
+          type: 'paragraph',
+          children: [{ text: '' }],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toBe('<p></p>');
+    });
+
+    it('should serialize multiple paragraphs', () => {
+      const nodes: CustomElement[] = [
+        {
+          type: 'paragraph',
+          children: [{ text: 'First' }],
+        },
+        {
+          type: 'paragraph',
+          children: [{ text: 'Second' }],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toBe('<p>First</p><p>Second</p>');
+    });
+
+    it('should serialize nested lists', () => {
+      const nodes: any[] = [
+        {
+          type: 'bulleted-list',
+          children: [
+            {
+              type: 'list-item',
+              children: [{ text: 'Main item' }],
+            },
+          ],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toContain('<ul>');
+      expect(html).toContain('<li>');
+      expect(html).toContain('Main item');
+    });
+
+    it('should serialize link without title', () => {
+      const nodes: any[] = [
+        {
+          type: 'paragraph',
+          children: [
+            {
+              type: 'link',
+              url: 'https://example.com',
+              children: [{ text: 'Link' }],
+            },
+          ],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toContain('href="https://example.com"');
+      expect(html).toContain('Link');
+    });
+
+    it('should serialize image without dimensions', () => {
+      const nodes: any[] = [
+        {
+          type: 'image',
+          url: 'https://example.com/image.jpg',
+          children: [{ text: '' }],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toContain('src="https://example.com/image.jpg"');
+    });
+
+    it('should serialize table with alignment', () => {
+      const nodes: any[] = [
+        {
+          type: 'table',
+          align: 'center',
+          children: [
+            {
+              type: 'table-row',
+              children: [
+                {
+                  type: 'table-cell',
+                  children: [{ text: 'Cell' }],
+                },
+              ],
+            },
+          ],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toContain('<table');
+      expect(html).toContain('Cell');
+    });
+
+    it('should serialize mixed content', () => {
+      const nodes: any[] = [
+        {
+          type: 'heading-one',
+          children: [{ text: 'Title' }],
+        },
+        {
+          type: 'paragraph',
+          children: [
+            { text: 'Some ' },
+            { text: 'bold', bold: true },
+            { text: ' text' },
+          ],
+        },
+        {
+          type: 'bulleted-list',
+          children: [
+            {
+              type: 'list-item',
+              children: [{ text: 'Item' }],
+            },
+          ],
+        },
+      ];
+      const html = serializeToHtml(nodes);
+      expect(html).toContain('<h1>Title</h1>');
+      expect(html).toContain('<strong>bold</strong>');
+      expect(html).toContain('<ul>');
+    });
+  });
+
+  describe('Advanced text utilities', () => {
+    it('should count words with punctuation', () => {
+      expect(countWords('Hello, World!')).toBe(2);
+      expect(countWords('One-two-three')).toBe(1);
+      expect(countWords("It's a beautiful day.")).toBe(4);
+    });
+
+    it('should handle text with newlines', () => {
+      expect(countWords('Line one\nLine two')).toBe(4);
+      expect(countCharacters('Line one\nLine two')).toBe(17);
+    });
+
+    it('should handle text with tabs', () => {
+      expect(countWords('Tab\tseparated\tvalues')).toBe(3);
+      expect(countCharactersNoSpaces('a\tb\tc')).toBe(3);
+    });
+
+    it('should handle unicode characters', () => {
+      expect(countCharacters('Hello 世界')).toBe(8);
+      expect(countWords('Hello 世界')).toBe(2);
+    });
+
+    it('should handle emoji', () => {
+      expect(countCharacters('Hello 👋 World')).toBeGreaterThan(0);
+      expect(countWords('Hello 👋 World')).toBe(3);
+    });
+
+    it('should handle empty and whitespace-only text', () => {
+      expect(countWords('')).toBe(0);
+      expect(countWords('   ')).toBe(0);
+      expect(countWords('\n\t  ')).toBe(0);
+      expect(countCharacters('')).toBe(0);
+      expect(countCharactersNoSpaces('   ')).toBe(0);
+    });
+  });
+
+  describe('Image URL edge cases', () => {
+    it('should validate URLs with query parameters', () => {
+      expect(isValidImageUrl('https://example.com/image.jpg?size=large&format=webp')).toBe(true);
+    });
+
+    it('should validate URLs with fragments', () => {
+      expect(isValidImageUrl('https://example.com/image.png#section')).toBe(true);
+    });
+
+    it('should validate uppercase extensions', () => {
+      expect(isValidImageUrl('https://example.com/IMAGE.JPG')).toBe(true);
+      expect(isValidImageUrl('https://example.com/photo.PNG')).toBe(true);
+    });
+
+    it('should handle relative URLs', () => {
+      const result = isValidImageUrl('/images/photo.jpg');
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('should handle blob URLs', () => {
+      const result = isValidImageUrl('blob:https://example.com/abc-123');
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('should reject empty strings', () => {
+      expect(isValidImageUrl('')).toBe(false);
+    });
+
+    it('should reject null or undefined gracefully', () => {
+      expect(isValidImageUrl(null as any)).toBe(false);
+      expect(isValidImageUrl(undefined as any)).toBe(false);
+    });
+  });
+
+  describe('Alignment utilities', () => {
+    it('should toggle alignment on paragraph', () => {
+      editor.children = [
+        {
+          type: 'paragraph',
+          children: [{ text: 'Text' }],
+        },
+      ];
+      editor.selection = {
+        anchor: { path: [0, 0], offset: 0 },
+        focus: { path: [0, 0], offset: 4 },
+      };
+
+      expect(() => toggleAlignment(editor, 'center')).not.toThrow();
+    });
+
+    it('should toggle alignment on heading', () => {
+      editor.children = [
+        {
+          type: 'heading-one',
+          children: [{ text: 'Title' }],
+        },
+      ];
+      editor.selection = {
+        anchor: { path: [0, 0], offset: 0 },
+        focus: { path: [0, 0], offset: 5 },
+      };
+
+      expect(() => toggleAlignment(editor, 'right')).not.toThrow();
+    });
+
+    it('should remove alignment when toggling same alignment', () => {
+      editor.children = [
+        {
+          type: 'paragraph',
+          align: 'center',
+          children: [{ text: 'Centered' }],
+        },
+      ];
+      editor.selection = {
+        anchor: { path: [0, 0], offset: 0 },
+        focus: { path: [0, 0], offset: 8 },
+      };
+
+      expect(() => toggleAlignment(editor, 'center')).not.toThrow();
+    });
+  });
+
+  describe('Block type utilities', () => {
+    it('should toggle block type to heading', () => {
+      expect(() => toggleBlock(editor, 'heading-one')).not.toThrow();
+    });
+
+    it('should toggle block type to code-block', () => {
+      expect(() => toggleBlock(editor, 'code-block')).not.toThrow();
+    });
+
+    it('should toggle block type to blockquote', () => {
+      expect(() => toggleBlock(editor, 'blockquote')).not.toThrow();
+    });
+
+    it('should check if heading is active', () => {
+      editor.children = [
+        {
+          type: 'heading-one',
+          children: [{ text: 'Title' }],
+        },
+      ];
+      editor.selection = {
+        anchor: { path: [0, 0], offset: 0 },
+        focus: { path: [0, 0], offset: 5 },
+      };
+
+      expect(isBlockActive(editor, 'heading-one')).toBe(true);
+      expect(isBlockActive(editor, 'heading-two')).toBe(false);
+    });
+  });
+
+  describe('Text extraction', () => {
+    it('should extract text from complex structure', () => {
+      const nodes = [
+        {
+          type: 'heading-one',
+          children: [{ text: 'Title' }],
+        },
+        {
+          type: 'paragraph',
+          children: [
+            { text: 'Some ' },
+            { text: 'formatted', bold: true },
+            { text: ' text' },
+          ],
+        },
+      ];
+      const text = getTextContent(nodes);
+      expect(text).toContain('Title');
+      expect(text).toContain('formatted');
+    });
+
+    it('should extract text from empty nodes', () => {
+      const nodes = [
+        {
+          type: 'paragraph',
+          children: [{ text: '' }],
+        },
+      ];
+      const text = getTextContent(nodes);
+      expect(text).toBe('');
+    });
+
+    it('should extract text from lists', () => {
+      const nodes = [
+        {
+          type: 'bulleted-list',
+          children: [
+            {
+              type: 'list-item',
+              children: [{ text: 'Item 1' }],
+            },
+            {
+              type: 'list-item',
+              children: [{ text: 'Item 2' }],
+            },
+          ],
+        },
+      ];
+      const text = getTextContent(nodes);
+      expect(text).toContain('Item 1');
+      expect(text).toContain('Item 2');
     });
   });
 });

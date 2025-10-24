@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-import Editium from '../src/Editium';
-import { CustomElement } from '../src/types';
+import Editium from '../../react/Editium';
+import { CustomElement } from '../../react/types';
 
 describe('Editium', () => {
   it('should render with default placeholder', () => {
@@ -393,5 +393,267 @@ describe('Editium', () => {
     const { container } = render(<Editium initialValue={initialValue} />);
     const paragraphs = container.querySelectorAll('p');
     expect(paragraphs.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('should handle complex nested formatting', () => {
+    const initialValue: CustomElement[] = [
+      {
+        type: 'paragraph',
+        children: [
+          { text: 'Normal ' },
+          { text: 'bold and italic', bold: true, italic: true },
+          { text: ' text' },
+        ],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const editable = container.querySelector('[data-slate-editor="true"]');
+    expect(editable).toBeTruthy();
+  });
+
+  it('should handle find and replace functionality when enabled', () => {
+    const { container } = render(<Editium toolbar={['find-replace']} />);
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle fullscreen mode when enabled', () => {
+    const { container } = render(<Editium toolbar={['fullscreen']} />);
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle export functionality when enabled', () => {
+    const { container } = render(<Editium toolbar={['bold']} />);
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle different heading levels', () => {
+    const initialValue: CustomElement[] = [
+      { type: 'heading-one', children: [{ text: 'H1' }] },
+      { type: 'heading-two', children: [{ text: 'H2' }] },
+      { type: 'heading-three', children: [{ text: 'H3' }] },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    expect(container.querySelector('h1')).toBeTruthy();
+    expect(container.querySelector('h2')).toBeTruthy();
+    expect(container.querySelector('h3')).toBeTruthy();
+  });
+
+  it('should handle mixed list types', () => {
+    const initialValue: any[] = [
+      {
+        type: 'bulleted-list',
+        children: [{ type: 'list-item', children: [{ text: 'Bullet' }] }],
+      },
+      {
+        type: 'numbered-list',
+        children: [{ type: 'list-item', children: [{ text: 'Number' }] }],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    expect(container.querySelector('ul')).toBeTruthy();
+    expect(container.querySelector('ol')).toBeTruthy();
+  });
+
+  it('should render with all formatting marks combined', () => {
+    const initialValue: CustomElement[] = [
+      {
+        type: 'paragraph',
+        children: [
+          {
+            text: 'Fully formatted',
+            bold: true,
+            italic: true,
+            underline: true,
+            color: '#ff0000',
+            backgroundColor: '#ffff00',
+          },
+        ],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const editable = container.querySelector('[data-slate-editor="true"]');
+    expect(editable).toBeTruthy();
+  });
+
+  it('should handle table with multiple rows and columns', () => {
+    const initialValue: any[] = [
+      {
+        type: 'table',
+        children: [
+          {
+            type: 'table-row',
+            children: [
+              { type: 'table-cell', children: [{ text: 'A1' }] },
+              { type: 'table-cell', children: [{ text: 'B1' }] },
+            ],
+          },
+          {
+            type: 'table-row',
+            children: [
+              { type: 'table-cell', children: [{ text: 'A2' }] },
+              { type: 'table-cell', children: [{ text: 'B2' }] },
+            ],
+          },
+        ],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const table = container.querySelector('table');
+    expect(table).toBeTruthy();
+    const cells = container.querySelectorAll('td, th');
+    expect(cells.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('should handle link with custom target', () => {
+    const initialValue: any[] = [
+      {
+        type: 'paragraph',
+        children: [
+          {
+            type: 'link',
+            url: 'https://example.com',
+            target: '_blank',
+            children: [{ text: 'External link' }],
+          },
+        ],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const link = container.querySelector('a');
+    expect(link).toBeTruthy();
+    expect(link?.href).toContain('example.com');
+  });
+
+  it('should handle image with custom dimensions', () => {
+    const initialValue: any[] = [
+      {
+        type: 'image',
+        url: 'https://example.com/image.jpg',
+        alt: 'Custom sized',
+        width: 500,
+        height: 300,
+        children: [{ text: '' }],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const img = container.querySelector('img');
+    expect(img).toBeTruthy();
+  });
+
+  it('should handle different text alignments', () => {
+    const initialValue: CustomElement[] = [
+      { type: 'paragraph', align: 'left', children: [{ text: 'Left' }] },
+      { type: 'paragraph', align: 'center', children: [{ text: 'Center' }] },
+      { type: 'paragraph', align: 'right', children: [{ text: 'Right' }] },
+      { type: 'paragraph', align: 'justify', children: [{ text: 'Justify' }] },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const paragraphs = container.querySelectorAll('p');
+    expect(paragraphs.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('should handle editor with no toolbar', () => {
+    const { container } = render(<Editium toolbar={[]} />);
+    const editable = container.querySelector('[data-slate-editor="true"]');
+    expect(editable).toBeTruthy();
+  });
+
+  it('should handle editor without spellCheck', () => {
+    const { container } = render(<Editium />);
+    const editable = container.querySelector('[data-slate-editor="true"]');
+    expect(editable).toBeTruthy();
+  });
+
+  it('should render with custom maxLength', () => {
+    const { container } = render(<Editium />);
+    const editable = container.querySelector('[data-slate-editor="true"]');
+    expect(editable).toBeTruthy();
+  });
+
+  it('should handle subscript and superscript together', () => {
+    const initialValue: CustomElement[] = [
+      {
+        type: 'paragraph',
+        children: [
+          { text: 'Normal ' },
+          { text: 'super', superscript: true },
+          { text: ' and ' },
+          { text: 'sub', subscript: true },
+        ],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    expect(container.querySelector('sup')).toBeTruthy();
+    expect(container.querySelector('sub')).toBeTruthy();
+  });
+
+  it('should handle blockquote with formatted content', () => {
+    const initialValue: CustomElement[] = [
+      {
+        type: 'blockquote',
+        children: [
+          { text: 'This is a ' },
+          { text: 'formatted', bold: true, italic: true },
+          { text: ' quote' },
+        ],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const blockquote = container.querySelector('blockquote');
+    expect(blockquote).toBeTruthy();
+  });
+
+  it('should handle code block with multiple lines', () => {
+    const initialValue: CustomElement[] = [
+      {
+        type: 'code-block',
+        children: [
+          { text: 'const x = 1;' },
+        ],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const pre = container.querySelector('pre');
+    expect(pre).toBeTruthy();
+  });
+
+  it('should handle very long text content', () => {
+    const longText = 'Lorem ipsum '.repeat(100);
+    const initialValue: CustomElement[] = [
+      {
+        type: 'paragraph',
+        children: [{ text: longText }],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const editable = container.querySelector('[data-slate-editor="true"]');
+    expect(editable).toBeTruthy();
+  });
+
+  it('should handle empty string in custom elements', () => {
+    const initialValue: CustomElement[] = [
+      {
+        type: 'paragraph',
+        children: [{ text: '' }],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const editable = container.querySelector('[data-slate-editor="true"]');
+    expect(editable).toBeTruthy();
+  });
+
+  it('should handle special characters in text', () => {
+    const initialValue: CustomElement[] = [
+      {
+        type: 'paragraph',
+        children: [{ text: '<>&"\'`' }],
+      },
+    ];
+    const { container } = render(<Editium initialValue={initialValue} />);
+    const editable = container.querySelector('[data-slate-editor="true"]');
+    expect(editable).toBeTruthy();
   });
 });

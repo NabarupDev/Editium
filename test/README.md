@@ -1,8 +1,25 @@
 # Editium Test Suite
 
-This directory contains comprehensive test cases for the Editium rich text editor component.
+This directory contains comprehensive test cases for both the React and vanilla JavaScript versions of the Editium rich text editor.
 
-## Test Files
+## Directory Structure
+
+```
+test/
+├── react/           # React version tests
+│   ├── Editium.test.tsx
+│   ├── Toolbar.test.tsx
+│   ├── ResizableImage.test.tsx
+│   ├── TableElement.test.tsx
+│   └── utils.test.ts
+├── vanilla/         # Vanilla JS version tests
+│   ├── editium.test.js
+│   └── README.md
+├── setup.ts         # Test setup and configuration
+└── README.md        # This file
+```
+
+## React Tests (`test/react/`)
 
 ### 1. `utils.test.ts`
 Tests for utility functions including:
@@ -56,11 +73,23 @@ Tests for the main Editium editor component:
 - onChange callback
 - Custom toolbar configurations
 
+## Vanilla JavaScript Tests (`test/vanilla/`)
+
+The vanilla JavaScript tests are currently **placeholder stubs** that need to be implemented. They cover the same functionality as the React tests but for the vanilla JS version.
+
+See `test/vanilla/README.md` for implementation details and TODO items.
+
 ## Running Tests
 
 ```bash
 # Run all tests
 npm test
+
+# Run only React tests
+npm test test/react
+
+# Run only vanilla tests (when implemented)
+npm test test/vanilla
 
 # Run tests in watch mode
 npm run test:watch

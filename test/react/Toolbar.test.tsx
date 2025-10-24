@@ -5,8 +5,8 @@ import { Slate, Editable } from 'slate-react';
 import { createEditor } from 'slate';
 import { withReact } from 'slate-react';
 import { withHistory } from 'slate-history';
-import Toolbar from '../src/Toolbar';
-import { ToolbarItem } from '../src/types';
+import Toolbar from '../../react/Toolbar';
+import { ToolbarItem } from '../../react/types';
 
 describe('Toolbar', () => {
   let editor: any;
@@ -328,6 +328,240 @@ describe('Toolbar', () => {
 
   it('should handle superscript and subscript buttons', () => {
     const items: ToolbarItem[] = ['superscript', 'subscript'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should render multiple separators correctly', () => {
+    const items: ToolbarItem[] = ['bold', 'separator', 'italic', 'separator', 'underline'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle heading-three button', () => {
+    const items: ToolbarItem[] = ['heading-three'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle view-output button', () => {
+    const items: ToolbarItem[] = ['view-output'];
+    const onViewOutput = vi.fn();
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} onViewOutput={onViewOutput} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should render with custom className', () => {
+    const items: ToolbarItem[] = ['bold'];
+    const customClass = 'custom-toolbar';
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} className={customClass} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector(`.${customClass}`);
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should render with empty items array', () => {
+    const items: ToolbarItem[] = [];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle format group buttons', () => {
+    const items: ToolbarItem[] = ['bold', 'italic', 'underline', 'strikethrough'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle alignment group buttons', () => {
+    const items: ToolbarItem[] = ['left', 'center', 'right', 'justify'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle list and indent buttons together', () => {
+    const items: ToolbarItem[] = ['bulleted-list', 'numbered-list', 'indent', 'outdent'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle heading dropdown items', () => {
+    const items: ToolbarItem[] = ['paragraph', 'heading-one', 'heading-two', 'heading-three'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle script buttons', () => {
+    const items: ToolbarItem[] = ['superscript', 'subscript'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle special content buttons', () => {
+    const items: ToolbarItem[] = ['link', 'image', 'table', 'horizontal-rule'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle history buttons', () => {
+    const items: ToolbarItem[] = ['undo', 'redo'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle utility buttons', () => {
+    const items: ToolbarItem[] = ['find-replace', 'fullscreen', 'view-output'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle block formatting buttons', () => {
+    const items: ToolbarItem[] = ['blockquote', 'code-block'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should handle inline formatting buttons', () => {
+    const items: ToolbarItem[] = ['bold', 'italic', 'underline', 'code'];
+    
+    const { container } = render(
+      <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
+        <Toolbar items={items} />
+        <Editable />
+      </Slate>
+    );
+
+    const toolbar = container.querySelector('[style*="border"]');
+    expect(toolbar).toBeTruthy();
+  });
+
+  it('should render with mixed item types', () => {
+    const items: ToolbarItem[] = [
+      'bold',
+      'separator',
+      'heading-one',
+      'separator',
+      'left',
+      'separator',
+      'link',
+    ];
     
     const { container } = render(
       <Slate editor={editor} initialValue={editor.children} onChange={() => {}}>
