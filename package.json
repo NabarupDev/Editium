@@ -1,6 +1,6 @@
 {
   "name": "editium",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "A powerful and feature-rich React rich text editor component built with Slate.js, featuring comprehensive formatting options, tables, images, find & replace, and more",
   "main": "dist/index.js",
