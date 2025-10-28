@@ -695,9 +695,16 @@ class Editium {
       }
       
       try {
-        new URL(url);
+        var parsedUrl = new URL(url, window.location.origin);
       } catch {
         alert('Please enter a valid URL');
+        return false;
+      }
+
+      // Only allow http, https, and mailto schemes for safety
+      const allowedSchemes = ['http:', 'https:', 'mailto:'];
+      if (!allowedSchemes.includes(parsedUrl.protocol)) {
+        alert('Only http, https, and mailto links are allowed for security reasons.');
         return false;
       }
 
