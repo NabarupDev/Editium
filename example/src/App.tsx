@@ -46,7 +46,7 @@ const App: React.FC = () => {
           onChange={handleChange}
           onImageUpload={handleImageUpload}
           height="200px"
-          showWordCount={false}
+          showWordCount={true}
         />
       </div>
       
