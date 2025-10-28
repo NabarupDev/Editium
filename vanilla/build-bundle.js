@@ -19,7 +19,7 @@ const bundledContent = `/**
     
     const styleElement = document.createElement('style');
     styleElement.id = 'editium-styles';
-    styleElement.textContent = \`${fontAwesomeCSS}\n\n${cssContent.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+    styleElement.textContent = \`${fontAwesomeCSS}\n\n${cssContent.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
     document.head.appendChild(styleElement);
   }
 
