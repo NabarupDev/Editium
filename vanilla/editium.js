@@ -486,10 +486,18 @@ class Editium {
         return false;
       }
       
+      let parsedUrl;
       try {
-        new URL(url);
+        parsedUrl = new URL(url);
       } catch {
         alert('Please enter a valid URL');
+        return false;
+      }
+
+      // Restrict to safe schemes
+      const allowedSchemes = ['http:', 'https:', 'mailto:', 'tel:'];
+      if (!allowedSchemes.includes(parsedUrl.protocol)) {
+        alert('Only http, https, mailto, or tel URLs are allowed.');
         return false;
       }
 
