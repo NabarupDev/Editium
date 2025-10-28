@@ -64,7 +64,7 @@ const editor = new Editium({
 
 ### Self-Hosted
 
-Download the files from the [GitHub repository](https://github.com/NabarupDev/Editify) and include them in your project:
+Download the files from the [GitHub repository](https://github.com/NabarupDev/Editium) and include them in your project:
 
 ```html
 <link rel="stylesheet" href="path/to/editium.css">
@@ -391,8 +391,8 @@ Custom styling example:
 ## Links
 
 - **NPM Package**: https://www.npmjs.com/package/editium
-- **GitHub Repository**: https://github.com/NabarupDev/Editify
-- **Issues**: https://github.com/NabarupDev/Editify/issues
+- **GitHub Repository**: https://github.com/NabarupDev/Editium
+- **Issues**: https://github.com/NabarupDev/Editium/issues
 - **unpkg CDN**: https://unpkg.com/editium@1.0.0/vanilla/
 - **jsDelivr CDN**: https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/
 

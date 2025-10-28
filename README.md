@@ -379,8 +379,8 @@ new Editium({
 ## Community & Support
 
 **Get Help**
-- [GitHub Issues](https://github.com/NabarupDev/Editify/issues) - Bug reports and feature requests
-- [GitHub Discussions](https://github.com/NabarupDev/Editify/discussions) - Questions and community support
+- [GitHub Issues](https://github.com/NabarupDev/Editium/issues) - Bug reports and feature requests
+- [GitHub Discussions](https://github.com/NabarupDev/Editium/discussions) - Questions and community support
 
 **Contributing**
 
@@ -417,8 +417,8 @@ Copyright © 2025 [Nabarup Dev](https://github.com/NabarupDev)
 
 **Made with ❤️ by [Nabarup Dev](https://github.com/NabarupDev)**
 
-⭐ **Star us on [GitHub](https://github.com/NabarupDev/Editify)** if you find this project useful!
+⭐ **Star us on [GitHub](https://github.com/NabarupDev/Editium)** if you find this project useful!
 
-[NPM](https://www.npmjs.com/package/editium) • [GitHub](https://github.com/NabarupDev/Editify) • [Issues](https://github.com/NabarupDev/Editify/issues)
+[NPM](https://www.npmjs.com/package/editium) • [GitHub](https://github.com/NabarupDev/Editium) • [Issues](https://github.com/NabarupDev/Editium/issues)
 
 </div>

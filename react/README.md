@@ -405,8 +405,8 @@ Custom CSS example:
 ## Links
 
 - **NPM Package**: https://www.npmjs.com/package/editium
-- **GitHub Repository**: https://github.com/NabarupDev/Editify
-- **Issues**: https://github.com/NabarupDev/Editify/issues
+- **GitHub Repository**: https://github.com/NabarupDev/Editium
+- **Issues**: https://github.com/NabarupDev/Editium/issues
 
 ## License
 
