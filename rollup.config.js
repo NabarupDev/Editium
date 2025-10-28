@@ -24,7 +24,6 @@ export default {
     }
   ],
   plugins: [
-    peerDepsExternal(),
     resolve({
       browser: true
     }),
@@ -38,5 +37,5 @@ export default {
       minimize: true
     })
   ],
-  external: ['react', 'react-dom']
+  external: ['react', 'react-dom', 'react/jsx-runtime', 'slate', 'slate-react', 'slate-history', '@heroicons/react/24/outline', '@heroicons/react/24/solid']
 };
