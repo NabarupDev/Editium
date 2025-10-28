@@ -7,32 +7,23 @@ export type ToolbarItem = FormatType | BlockType | AlignmentType | 'link' | 'ind
 
 // All available toolbar items in a logical grouped order
 export const ALL_TOOLBAR_ITEMS: ToolbarItem[] = [
-  // Document Structure Group
   'paragraph', 'heading-one', 'heading-two', 'heading-three', 'heading-four', 
   'heading-five', 'heading-six', 'heading-seven', 'heading-eight',
   'separator',
-  // Basic Text Formatting Group
   'bold', 'italic', 'underline', 'strikethrough',
   'separator',
-  // Advanced Text Formatting Group  
   'superscript', 'subscript', 'code',
   'separator',
-  // Text Alignment Group
   'left', 'center', 'right', 'justify',
   'separator',
-  // Color Controls Group
   'text-color', 'bg-color',
   'separator',
-  // Block Elements Group
   'blockquote', 'code-block',
   'separator',
-  // Lists and Organization Group
   'bulleted-list', 'numbered-list', 'indent', 'outdent',
   'separator',
-  // Tools and Actions Group
   'link', 'image', 'table', 'horizontal-rule', 'undo', 'redo',
   'separator',
-  // Utilities
   'find-replace', 'fullscreen', 'view-output'
 ];
 

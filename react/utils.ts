@@ -2,7 +2,6 @@ import { Editor, Element as SlateElement, Transforms, Range, Text, Path } from '
 import { ReactEditor } from 'slate-react';
 import { CustomElement, CustomText, FormatType, BlockType, LinkElement, AlignmentType, ImageElement } from './types';
 
-// Check if an alignment is active
 export const isAlignmentActive = (editor: Editor, alignment: AlignmentType): boolean => {
   const { selection } = editor;
   if (!selection) return false;
@@ -20,7 +19,6 @@ export const isAlignmentActive = (editor: Editor, alignment: AlignmentType): boo
   return !!match;
 };
 
-// Toggle alignment
 export const toggleAlignment = (editor: Editor, alignment: AlignmentType): void => {
   const isActive = isAlignmentActive(editor, alignment);
   
@@ -36,12 +34,10 @@ export const toggleAlignment = (editor: Editor, alignment: AlignmentType): void 
   );
 };
 
-// Indent list item
 export const indentListItem = (editor: Editor): void => {
   const { selection } = editor;
   if (!selection) return;
 
-  // First, ensure we're in a list item
   const [listItemMatch] = Array.from(
     Editor.nodes(editor, {
       match: (n: any) => 
@@ -53,7 +49,6 @@ export const indentListItem = (editor: Editor): void => {
 
   if (!listItemMatch) return;
 
-  // Get the parent list to determine list type
   const [listMatch] = Array.from(
     Editor.nodes(editor, {
       match: (n: any) => 
@@ -67,7 +62,6 @@ export const indentListItem = (editor: Editor): void => {
     const [parentList] = listMatch;
     const listType = (parentList as CustomElement).type;
     
-    // Wrap the current list item in a new nested list
     Transforms.wrapNodes(
       editor,
       { type: listType, children: [] } as CustomElement,
@@ -81,12 +75,10 @@ export const indentListItem = (editor: Editor): void => {
   }
 };
 
-// Outdent list item  
 export const outdentListItem = (editor: Editor): void => {
   const { selection } = editor;
   if (!selection) return;
 
-  // Check if we're in a nested list structure
   const listNodes = Array.from(
     Editor.nodes(editor, {
       match: (n: any) => 
@@ -96,7 +88,6 @@ export const outdentListItem = (editor: Editor): void => {
     })
   );
 
-  // If we have multiple list levels (nested), unwrap one level
   if (listNodes.length > 1) {
     Transforms.unwrapNodes(editor, {
       match: (n: any) => 
@@ -106,7 +97,6 @@ export const outdentListItem = (editor: Editor): void => {
       split: true,
     });
   } else if (listNodes.length === 1) {
-    // If only one list level, convert to paragraph
     Transforms.unwrapNodes(editor, {
       match: (n: any) => 
         !Editor.isEditor(n) &&
@@ -126,13 +116,11 @@ export const outdentListItem = (editor: Editor): void => {
   }
 };
 
-// Check if a mark is active
 export const isMarkActive = (editor: Editor, format: FormatType): boolean => {
   const marks = Editor.marks(editor);
   return marks ? marks[format] === true : false;
 };
 
-// Check if a block type is active
 export const isBlockActive = (editor: Editor, format: BlockType): boolean => {
   const { selection } = editor;
   if (!selection) return false;
@@ -150,7 +138,6 @@ export const isBlockActive = (editor: Editor, format: BlockType): boolean => {
   return !!match;
 };
 
-// Toggle a mark
 export const toggleMark = (editor: Editor, format: FormatType): void => {
   const isActive = isMarkActive(editor, format);
 
@@ -161,7 +148,6 @@ export const toggleMark = (editor: Editor, format: FormatType): void => {
   }
 };
 
-// Apply color to text
 export const applyColor = (editor: Editor, color: string | null): void => {
   if (color === null) {
     Editor.removeMark(editor, 'color');
@@ -170,7 +156,6 @@ export const applyColor = (editor: Editor, color: string | null): void => {
   }
 };
 
-// Apply background color to text
 export const applyBackgroundColor = (editor: Editor, color: string | null): void => {
   if (color === null) {
     Editor.removeMark(editor, 'backgroundColor');
@@ -179,19 +164,16 @@ export const applyBackgroundColor = (editor: Editor, color: string | null): void
   }
 };
 
-// Get active color
 export const getActiveColor = (editor: Editor): string | null => {
   const marks = Editor.marks(editor);
   return marks?.color ? String(marks.color) : null;
 };
 
-// Get active background color
 export const getActiveBackgroundColor = (editor: Editor): string | null => {
   const marks = Editor.marks(editor);
   return marks?.backgroundColor ? String(marks.backgroundColor) : null;
 };
 
-// Toggle a block type
 export const toggleBlock = (editor: Editor, format: BlockType): void => {
   const isActive = isBlockActive(editor, format);
   const isList = ['bulleted-list', 'numbered-list'].includes(format);
@@ -219,7 +201,6 @@ export const toggleBlock = (editor: Editor, format: BlockType): void => {
   }
 };
 
-// Insert horizontal rule
 export const insertHorizontalRule = (editor: Editor): void => {
   const hr: CustomElement = {
     type: 'horizontal-rule',
@@ -228,7 +209,6 @@ export const insertHorizontalRule = (editor: Editor): void => {
   
   Transforms.insertNodes(editor, hr);
   
-  // Insert a new paragraph after the horizontal rule
   const paragraph: CustomElement = {
     type: 'paragraph',
     children: [{ text: '' }],
@@ -236,7 +216,6 @@ export const insertHorizontalRule = (editor: Editor): void => {
   Transforms.insertNodes(editor, paragraph);
 };
 
-// Insert image
 export const insertImage = (editor: Editor, url: string, alt?: string, width?: number): void => {
   const image: any = {
     type: 'image',
@@ -248,7 +227,6 @@ export const insertImage = (editor: Editor, url: string, alt?: string, width?: n
   
   Transforms.insertNodes(editor, image);
   
-  // Insert a new paragraph after the image for continued editing
   const paragraph: any = {
     type: 'paragraph',
     children: [{ text: '' }],
@@ -256,16 +234,15 @@ export const insertImage = (editor: Editor, url: string, alt?: string, width?: n
   Transforms.insertNodes(editor, paragraph);
 };
 
-// Validate image URL
 export const isValidImageUrl = (url: string): boolean => {
   try {
     const parsedUrl = new URL(url);
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.bmp', '.ico'];
     const pathname = parsedUrl.pathname.toLowerCase();
     return imageExtensions.some(ext => pathname.endsWith(ext)) || 
-           parsedUrl.protocol === 'data:' || // Support data URLs
-           pathname.includes('/image') || // Common image path patterns
-           parsedUrl.hostname.includes('cdn') || // CDN URLs
+           parsedUrl.protocol === 'data:' || 
+           pathname.includes('/image') ||
+           parsedUrl.hostname.includes('cdn') ||
            parsedUrl.hostname.includes('imgur') ||
            parsedUrl.hostname.includes('unsplash');
   } catch {
@@ -273,7 +250,6 @@ export const isValidImageUrl = (url: string): boolean => {
   }
 };
 
-// Insert a link
 export const insertLink = (editor: Editor, url: string, title?: string, target?: '_blank' | '_self'): void => {
   if (editor.selection) {
     wrapLink(editor, url, title, target);
@@ -336,7 +312,6 @@ export const wrapLink = (editor: Editor, url: string, title?: string, target?: '
   }
 };
 
-// Insert table
 export const insertTable = (editor: Editor, rows: number = 3, cols: number = 3): void => {
   const tableRows: any[] = [];
   
@@ -364,11 +339,9 @@ export const insertTable = (editor: Editor, rows: number = 3, cols: number = 3):
     children: [{ text: '' }],
   };
 
-  // Insert both table and paragraph at once
   Transforms.insertNodes(editor, [table, paragraph]);
 };
 
-// Check if we're currently in a table
 export const isInTable = (editor: Editor): boolean => {
   const { selection } = editor;
   if (!selection) return false;
@@ -386,12 +359,10 @@ export const isInTable = (editor: Editor): boolean => {
   return !!tableMatch;
 };
 
-// Add table row
 export const addTableRow = (editor: Editor): void => {
   const { selection } = editor;
   if (!selection) return;
 
-  // Find the table
   const [tableMatch] = Array.from(
     Editor.nodes(editor, {
       at: selection,
@@ -408,7 +379,6 @@ export const addTableRow = (editor: Editor): void => {
   const firstRow = table.children[0];
   const colCount = firstRow?.children?.length || 1;
 
-  // Create new row with same number of columns
   const cells: any[] = [];
   for (let i = 0; i < colCount; i++) {
     cells.push({
@@ -422,18 +392,15 @@ export const addTableRow = (editor: Editor): void => {
     children: cells,
   };
 
-  // Insert at the end of the table
   Transforms.insertNodes(editor, newRow, {
     at: [...tablePath, table.children.length],
   });
 };
 
-// Remove table row
 export const removeTableRow = (editor: Editor): void => {
   const { selection } = editor;
   if (!selection) return;
 
-  // Find the current row
   const [rowMatch] = Array.from(
     Editor.nodes(editor, {
       at: selection,
@@ -448,7 +415,6 @@ export const removeTableRow = (editor: Editor): void => {
 
   const [, rowPath] = rowMatch as [any, Path];
   
-  // Check if this is the last row - don't delete if so
   const [tableMatch] = Array.from(
     Editor.nodes(editor, {
       at: selection,
@@ -462,7 +428,6 @@ export const removeTableRow = (editor: Editor): void => {
   if (tableMatch) {
     const [table] = tableMatch as [any, Path];
     if (table.children.length <= 1) {
-      // If it's the last row, remove the entire table
       Transforms.removeNodes(editor, {
         match: (n: any) =>
           !Editor.isEditor(n) &&
@@ -476,12 +441,10 @@ export const removeTableRow = (editor: Editor): void => {
   Transforms.removeNodes(editor, { at: rowPath });
 };
 
-// Add table column
 export const addTableColumn = (editor: Editor): void => {
   const { selection } = editor;
   if (!selection) return;
 
-  // Find the table
   const [tableMatch] = Array.from(
     Editor.nodes(editor, {
       at: selection,
@@ -496,7 +459,6 @@ export const addTableColumn = (editor: Editor): void => {
 
   const [table, tablePath] = tableMatch as [any, Path];
 
-  // Add a cell to each row
   table.children.forEach((_row: any, rowIndex: number) => {
     const newCell: any = {
       type: 'table-cell',
@@ -509,12 +471,10 @@ export const addTableColumn = (editor: Editor): void => {
   });
 };
 
-// Remove table column
 export const removeTableColumn = (editor: Editor): void => {
   const { selection } = editor;
   if (!selection) return;
 
-  // Find the current cell
   const [cellMatch] = Array.from(
     Editor.nodes(editor, {
       at: selection,
@@ -530,7 +490,6 @@ export const removeTableColumn = (editor: Editor): void => {
   const [, cellPath] = cellMatch as [any, Path];
   const cellIndex = cellPath[cellPath.length - 1];
 
-  // Find the table
   const [tableMatch] = Array.from(
     Editor.nodes(editor, {
       at: selection,
@@ -545,14 +504,11 @@ export const removeTableColumn = (editor: Editor): void => {
 
   const [table, tablePath] = tableMatch as [any, Path];
   
-  // Check if this is the last column - don't delete if so
   if (table.children[0]?.children?.length <= 1) {
-    // If it's the last column, remove the entire table
     Transforms.removeNodes(editor, { at: tablePath });
     return;
   }
 
-  // Remove the cell from each row
   for (let rowIndex = table.children.length - 1; rowIndex >= 0; rowIndex--) {
     Transforms.removeNodes(editor, {
       at: [...tablePath, rowIndex, cellIndex],
@@ -560,12 +516,10 @@ export const removeTableColumn = (editor: Editor): void => {
   }
 };
 
-// Set table alignment
 export const setTableAlignment = (editor: Editor, alignment: AlignmentType): void => {
   const { selection } = editor;
   if (!selection) return;
 
-  // Find the table
   const [tableMatch] = Array.from(
     Editor.nodes(editor, {
       at: selection,
@@ -587,14 +541,12 @@ export const setTableAlignment = (editor: Editor, alignment: AlignmentType): voi
   );
 };
 
-// Find all text matches in editor
 export const findAllMatches = (editor: Editor, searchQuery: string): Array<{ path: Path; offset: number; text: string }> => {
   if (!searchQuery) return [];
   
   const matches: Array<{ path: Path; offset: number; text: string }> = [];
   const searchLower = searchQuery.toLowerCase();
   
-  // Iterate through all text nodes
   const textNodes = Array.from(
     Editor.nodes(editor, {
       at: [],
@@ -621,14 +573,12 @@ export const findAllMatches = (editor: Editor, searchQuery: string): Array<{ pat
   return matches;
 };
 
-// Navigate to specific match
 export const navigateToMatch = (editor: Editor, match: { path: Path; offset: number; text: string }) => {
   const start = { path: match.path, offset: match.offset };
   const end = { path: match.path, offset: match.offset + match.text.length };
   
   Transforms.select(editor, { anchor: start, focus: end });
   
-  // Scroll into view
   const domRange = ReactEditor.toDOMRange(editor as any, editor.selection!);
   domRange.startContainer.parentElement?.scrollIntoView({
     behavior: 'smooth',
@@ -636,7 +586,6 @@ export const navigateToMatch = (editor: Editor, match: { path: Path; offset: num
   });
 };
 
-// Replace current match
 export const replaceMatch = (
   editor: Editor,
   match: { path: Path; offset: number; text: string },
@@ -649,13 +598,11 @@ export const replaceMatch = (
   Transforms.insertText(editor, replaceText);
 };
 
-// Replace all matches
 export const replaceAllMatches = (
   editor: Editor,
   matches: Array<{ path: Path; offset: number; text: string }>,
   replaceText: string
 ): void => {
-  // Replace from end to beginning to maintain correct offsets
   const sortedMatches = [...matches].reverse();
   
   Editor.withoutNormalizing(editor, () => {
@@ -670,7 +617,6 @@ export const replaceAllMatches = (
   });
 };
 
-// Serialize to HTML
 export const serializeToHtml = (nodes: (CustomElement | LinkElement | ImageElement)[]): string => {
   return nodes.map(node => serializeNode(node)).join('');
 };
@@ -680,13 +626,11 @@ const serializeNode = (node: CustomElement | LinkElement | ImageElement | Custom
     const textNode = node as CustomText;
     let string = escapeHtml(textNode.text);
     
-    // Collect inline styles
     const styles: string[] = [];
     if (textNode.color) styles.push(`color: ${textNode.color}`);
     if (textNode.backgroundColor) styles.push(`background-color: ${textNode.backgroundColor}`);
     const styleAttr = styles.length > 0 ? ` style="${styles.join('; ')}"` : '';
     
-    // Apply formatting
     if (textNode.bold) string = `<strong>${string}</strong>`;
     if (textNode.italic) string = `<em>${string}</em>`;
     if (textNode.underline) string = `<u>${string}</u>`;
@@ -695,7 +639,6 @@ const serializeNode = (node: CustomElement | LinkElement | ImageElement | Custom
     if (textNode.superscript) string = `<sup>${string}</sup>`;
     if (textNode.subscript) string = `<sub>${string}</sub>`;
     
-    // Wrap in span if we have color/backgroundColor
     if (styleAttr) {
       string = `<span${styleAttr}>${string}</span>`;
     }
@@ -782,7 +725,6 @@ const escapeHtml = (text: string): string => {
   return div.innerHTML;
 };
 
-// Default initial value
 export const defaultInitialValue: CustomElement[] = [
   {
     type: 'paragraph',
@@ -790,7 +732,6 @@ export const defaultInitialValue: CustomElement[] = [
   },
 ];
 
-// Word and Character Counter utilities
 export const getTextContent = (nodes: any[]): string => {
   return nodes
     .map((node: any) => {
@@ -806,11 +747,9 @@ export const getTextContent = (nodes: any[]): string => {
 };
 
 export const countWords = (text: string): number => {
-  // Remove extra whitespace and split by spaces
   const trimmed = text.trim();
   if (trimmed === '') return 0;
   
-  // Split by whitespace and filter out empty strings
   return trimmed.split(/\s+/).filter(word => word.length > 0).length;
 };
 

@@ -43,7 +43,6 @@ describe('Editium', () => {
     expect(editable).toBeTruthy();
     
     // The onChange handler exists and the editor is rendered
-    // Note: Slate's onChange may not fire immediately in tests without user interaction
     expect(onChange).toBeDefined();
   });
 

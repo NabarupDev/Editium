@@ -22,7 +22,6 @@ const ResizableImage: React.FC<ResizableImageProps> = ({ element, attributes, ch
   const imageRef = useRef<HTMLImageElement>(null);
   const startPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
-  // Get natural dimensions when image loads
   const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     if (!element.width && !element.height) {
@@ -33,7 +32,6 @@ const ResizableImage: React.FC<ResizableImageProps> = ({ element, attributes, ch
     }
   }, [element.width, element.height]);
 
-  // Start resize
   const handleMouseDown = useCallback((e: React.MouseEvent, handle: 'se' | 'sw' | 'ne' | 'nw' | 'n' | 's' | 'e' | 'w') => {
     e.preventDefault();
     e.stopPropagation();
@@ -56,37 +54,36 @@ const ResizableImage: React.FC<ResizableImageProps> = ({ element, attributes, ch
       let newWidth = startPos.current.width;
       let newHeight = startPos.current.height;
 
-      // Calculate new dimensions based on handle
       switch (handle) {
-        case 'se': // Southeast (bottom-right)
+        case 'se':
           newWidth = Math.max(100, startPos.current.width + deltaX);
           newHeight = Math.max(100, startPos.current.height + deltaY);
           break;
-        case 'sw': // Southwest (bottom-left)
+        case 'sw':
           newWidth = Math.max(100, startPos.current.width - deltaX);
           newHeight = Math.max(100, startPos.current.height + deltaY);
           break;
-        case 'ne': // Northeast (top-right)
+        case 'ne':
           newWidth = Math.max(100, startPos.current.width + deltaX);
           newHeight = Math.max(100, startPos.current.height - deltaY);
           break;
-        case 'nw': // Northwest (top-left)
+        case 'nw':
           newWidth = Math.max(100, startPos.current.width - deltaX);
           newHeight = Math.max(100, startPos.current.height - deltaY);
           break;
-        case 'e': // East (right edge)
+        case 'e':
           newWidth = Math.max(100, startPos.current.width + deltaX);
           newHeight = startPos.current.height;
           break;
-        case 'w': // West (left edge)
+        case 'w':
           newWidth = Math.max(100, startPos.current.width - deltaX);
           newHeight = startPos.current.height;
           break;
-        case 'n': // North (top edge)
+        case 'n':
           newWidth = startPos.current.width;
           newHeight = Math.max(100, startPos.current.height - deltaY);
           break;
-        case 's': // South (bottom edge)
+        case 's':
           newWidth = startPos.current.width;
           newHeight = Math.max(100, startPos.current.height + deltaY);
           break;
@@ -98,7 +95,6 @@ const ResizableImage: React.FC<ResizableImageProps> = ({ element, attributes, ch
     const handleMouseUp = () => {
       setIsResizing(false);
       
-      // Update the element with new dimensions
       const path = ReactEditor.findPath(editor as ReactEditor, element);
       Transforms.setNodes(
         editor,
@@ -117,15 +113,12 @@ const ResizableImage: React.FC<ResizableImageProps> = ({ element, attributes, ch
     document.addEventListener('mouseup', handleMouseUp);
   }, [dimensions, editor, element]);
 
-  // Handle image removal
   const handleRemoveImage = useCallback(() => {
     const path = ReactEditor.findPath(editor as ReactEditor, element);
     Transforms.removeNodes(editor, { at: path });
   }, [editor, element]);
 
-  // Handle image replacement
   const handleReplaceImage = useCallback(() => {
-    // Trigger the image modal with replacement mode
     if ((window as any).__editiumImageReplaceHandler) {
       const path = ReactEditor.findPath(editor as ReactEditor, element);
       (window as any).__editiumImageReplaceHandler({
@@ -139,7 +132,6 @@ const ResizableImage: React.FC<ResizableImageProps> = ({ element, attributes, ch
     }
   }, [editor, element]);
 
-  // Handle alignment change
   const handleAlignmentChange = useCallback((alignment: 'left' | 'center' | 'right') => {
     const path = ReactEditor.findPath(editor as ReactEditor, element);
     Transforms.setNodes(

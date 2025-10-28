@@ -1,89 +1,57 @@
 # Editium Vanilla JavaScript Editor
 
-A powerful, feature-rich rich text editor built with vanilla JavaScript. No dependencies, no frameworks - just pure JavaScript.
+A lightweight, powerful rich text editor built with pure vanilla JavaScript. Zero dependencies, framework-agnostic, and production-ready.
 
-## 🚀 Quick Start
+## Features
 
-### CDN Usage (Recommended)
+- **Zero Dependencies** - Pure vanilla JavaScript, no external frameworks required
+- **Lightweight** - Minimal footprint with maximum functionality
+- **Rich Text Editing** - Comprehensive formatting options (bold, italic, underline, strikethrough, etc.)
+- **Advanced Features** - Tables, images, code blocks, and more
+- **Customizable** - Flexible toolbar and styling options
+- **Production Ready** - Battle-tested and reliable
+- **Multiple Formats** - Export to HTML, plain text, or JSON
+- **Keyboard Shortcuts** - Efficient editing with standard shortcuts
+- **Responsive** - Works seamlessly on all screen sizes
+- **Accessible** - ARIA support and keyboard navigation
 
-The vanilla version is included in the main `editium` npm package and can be accessed via unpkg or jsDelivr CDN.
+## Installation
 
-#### Using unpkg
+### CDN (Recommended)
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editium Editor</title>
-  
-  <!-- Font Awesome (required for icons) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  
-  <!-- Editium CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/editium@1.0.0/vanilla/editium.css">
-</head>
-<body>
-  <div id="editor"></div>
-
-  <!-- Editium JS -->
-  <script src="https://unpkg.com/editium@1.0.0/vanilla/editium.js"></script>
-  <script>
-    const editor = new Editium({
-      container: document.getElementById('editor'),
-      placeholder: 'Start typing...',
-      toolbar: 'all',
-      showWordCount: true
-    });
-  </script>
-</body>
-</html>
-```
-
-#### Using jsDelivr
+**Single Bundle** - All-in-one file including JavaScript, CSS, and icons:
 
 ```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editium Editor</title>
-  
-  <!-- Font Awesome (required for icons) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  
-  <!-- Editium CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/editium.css">
-</head>
-<body>
-  <div id="editor"></div>
-
-  <!-- Editium JS -->
-  <script src="https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/editium.js"></script>
-  <script>
-    const editor = new Editium({
-      container: document.getElementById('editor'),
-      placeholder: 'Start typing...',
-      toolbar: 'all',
-      showWordCount: true
-    });
-  </script>
-</body>
-</html>
+<script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
 ```
 
-### NPM Installation
+**Alternative CDNs:**
+```html
+<!-- jsDelivr -->
+<script src="https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/editium.bundle.js"></script>
+```
 
-The vanilla version is included when you install the main editium package:
+**Separate Files** - For more control:
+
+```html
+<!-- unpkg -->
+<link rel="stylesheet" href="https://unpkg.com/editium@1.0.0/vanilla/editium.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<script src="https://unpkg.com/editium@1.0.0/vanilla/editium.js"></script>
+
+<!-- jsDelivr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/editium.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/editium.js"></script>
+```
+
+### NPM
 
 ```bash
 npm install editium
 ```
 
 ```javascript
-// Import the vanilla version files
 import 'editium/vanilla/editium.css';
 import Editium from 'editium/vanilla/editium.js';
 
@@ -94,67 +62,98 @@ const editor = new Editium({
 });
 ```
 
-### Download and Self-Host
+### Self-Hosted
 
-Download the files directly from the repository and include them in your project:
+Download the files from the [GitHub repository](https://github.com/NabarupDev/Editify) and include them in your project:
 
 ```html
 <link rel="stylesheet" href="path/to/editium.css">
 <script src="path/to/editium.js"></script>
 ```
 
-## 📚 Configuration Options
+## Quick Start
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editium Editor</title>
+  <script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
+</head>
+<body>
+  <div id="editor"></div>
+
+  <script>
+    const editor = new Editium({
+      container: document.getElementById('editor'),
+      placeholder: 'Start typing...',
+      toolbar: 'all',
+      showWordCount: true
+    });
+  </script>
+</body>
+</html>
+```
+
+## Configuration
+
+### Options
 
 ```javascript
 const editor = new Editium({
-  container: document.getElementById('editor'),  // Required: DOM element
-  placeholder: 'Start typing...',                // Optional: Placeholder text
-  toolbar: 'all',                                // Optional: 'all' or array of items
-  showWordCount: true,                           // Optional: Show word/character count
-  readOnly: false,                               // Optional: Make editor read-only
-  className: 'custom-class',                     // Optional: Custom CSS class
-  
-  // Height configuration (can be string or number)
-  height: '300px',                               // Optional: Default '200px' (or number: 300)
-  minHeight: '200px',                            // Optional: Default '150px' (or number: 200)
-  maxHeight: '400px',                            // Optional: Default '250px' (or number: 400)
-  
-  onChange: (content) => {                       // Optional: Content change callback
+  container: document.getElementById('editor'),
+  placeholder: 'Start typing...',
+  toolbar: 'all',
+  showWordCount: true,
+  readOnly: false,
+  className: 'custom-class',
+  height: '300px',
+  minHeight: '200px',
+  maxHeight: '400px',
+  onChange: (content) => {
     console.log('Content changed:', content);
   },
-  onImageUpload: async (file) => {              // Optional: Custom image upload
-    // Upload file to your server
+  onImageUpload: async (file) => {
     const url = await uploadToServer(file);
     return url;
   }
 });
 ```
 
+### Available Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `container` | HTMLElement | required | DOM element to attach the editor |
+| `placeholder` | string | `''` | Placeholder text when editor is empty |
+| `toolbar` | string \| array | `'all'` | Toolbar configuration ('all' or array of items) |
+| `showWordCount` | boolean | `false` | Display word and character count |
+| `readOnly` | boolean | `false` | Make editor read-only |
+| `className` | string | `''` | Custom CSS class for wrapper |
+| `height` | string \| number | `'200px'` | Default editor height |
+| `minHeight` | string \| number | `'150px'` | Minimum height before content shrinks |
+| `maxHeight` | string \| number | `'250px'` | Maximum height before scrolling |
+| `onChange` | function | `null` | Callback when content changes |
+| `onImageUpload` | function | `null` | Custom image upload handler |
+
 ### Height Configuration
 
-You can control the editor's dimensions using these options:
+Heights can be specified as strings (`'300px'`, `'20rem'`, `'50vh'`) or numbers (`300` converts to `'300px'`).
 
-- **`height`**: Sets the default height of the editor (default: `'200px'`)
-- **`minHeight`**: Sets the minimum height before content can shrink (default: `'150px'`)
-- **`maxHeight`**: Sets the maximum height before scrolling appears (default: `'250px'`)
-
-Heights can be specified as:
-- **String**: `'300px'`, `'20rem'`, `'50vh'`, etc.
-- **Number**: `300` (automatically converted to `'300px'`)
-
-Example:
 ```javascript
 const editor = new Editium({
   container: document.getElementById('editor'),
-  height: 400,        // 400px tall
-  minHeight: 200,     // Won't shrink below 200px
-  maxHeight: 600,     // Will scroll after 600px
+  height: 400,
+  minHeight: 200,
+  maxHeight: 600
 });
 ```
 
-## 🎨 Toolbar Options
+## Toolbar
 
-### Using All Features
+### Predefined Toolbar
 
 ```javascript
 toolbar: 'all'
@@ -164,93 +163,71 @@ toolbar: 'all'
 
 ```javascript
 toolbar: [
-  'bold', 'italic', 'underline',           // Text formatting
+  'bold', 'italic', 'underline',
   'separator',
-  'heading-one', 'heading-two',            // Headings
+  'heading-one', 'heading-two',
   'separator',
-  'bulleted-list', 'numbered-list',        // Lists
+  'bulleted-list', 'numbered-list',
   'separator',
-  'link', 'image', 'table',                // Insert elements
+  'link', 'image', 'table',
   'separator',
-  'undo', 'redo'                           // History
+  'undo', 'redo'
 ]
 ```
 
-### Available Toolbar Items
+### Available Items
 
-**Text Formatting:**
-- `bold` - Bold text
-- `italic` - Italic text
-- `underline` - Underline text
-- `strikethrough` - Strikethrough text
-- `code` - Inline code
-- `superscript` - Superscript
-- `subscript` - Subscript
+#### Text Formatting
+- `bold`, `italic`, `underline`, `strikethrough`
+- `code`, `superscript`, `subscript`
 
-**Block Formats:**
-- `paragraph` - Normal paragraph
-- `heading-one` to `heading-six` - H1 to H6
-- `blockquote` - Quote block
-- `code-block` - Code block
+#### Block Formats
+- `paragraph`
+- `heading-one`, `heading-two`, `heading-three`, `heading-four`, `heading-five`, `heading-six`
+- `blockquote`, `code-block`
 
-**Alignment:**
-- `left` - Align left
-- `center` - Align center
-- `right` - Align right
-- `justify` - Justify text
+#### Alignment
+- `left`, `center`, `right`, `justify`
 
-**Colors:**
-- `text-color` - Text color picker
-- `bg-color` - Background color picker
+#### Colors
+- `text-color`, `bg-color`
 
-**Lists:**
-- `bulleted-list` - Unordered list
-- `numbered-list` - Ordered list
-- `indent` - Increase indent
-- `outdent` - Decrease indent
+#### Lists
+- `bulleted-list`, `numbered-list`
+- `indent`, `outdent`
 
-**Insert:**
-- `link` - Insert/edit link
-- `image` - Insert image
-- `table` - Insert table
-- `horizontal-rule` - Horizontal line
+#### Insert
+- `link`, `image`, `table`, `horizontal-rule`
 
-**History:**
-- `undo` - Undo changes
-- `redo` - Redo changes
+#### History
+- `undo`, `redo`
 
-**View:**
-- `preview` - Preview content
-- `view-html` - View HTML source
-- `view-json` - View JSON representation
-- `find-replace` - Find and replace
-- `fullscreen` - Toggle fullscreen
+#### View
+- `preview`, `view-html`, `view-json`, `find-replace`, `fullscreen`
 
-**Separator:**
-- `separator` - Visual separator in toolbar
+#### Other
+- `separator`
 
-## 🔧 API Methods
+## API
 
 ```javascript
-// Get content in different formats
-const html = editor.getHTML();        // Get HTML content
-const text = editor.getText();        // Get plain text
-const json = editor.getJSON();        // Get JSON representation
+// Get content
+const html = editor.getHTML();
+const text = editor.getText();
+const json = editor.getJSON();
 
 // Set content
 editor.setContent('<p>New content</p>');
 
-// Clear editor
+// Clear and focus
 editor.clear();
-
-// Focus editor
 editor.focus();
 
-// Destroy editor instance
+// Cleanup
 editor.destroy();
 ```
 
-## 📝 Examples
+## Usage Examples
 
 ### Basic Editor
 
@@ -300,7 +277,9 @@ editor.destroy();
 </script>
 ```
 
-### With Custom Image Upload
+## Advanced Features
+
+### Custom Image Upload Handler
 
 ```html
 <div id="editor-with-upload"></div>
@@ -310,24 +289,22 @@ editor.destroy();
     container: document.getElementById('editor-with-upload'),
     toolbar: 'all',
     onImageUpload: async (file) => {
-      // Create FormData
       const formData = new FormData();
       formData.append('image', file);
       
-      // Upload to your server
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData
       });
       
       const data = await response.json();
-      return data.url; // Return the uploaded image URL
+      return data.url;
     }
   });
 </script>
 ```
 
-### Saving Content
+### Saving and Loading Content
 
 ```html
 <div id="editor"></div>
@@ -346,7 +323,6 @@ editor.destroy();
       json: editor.getJSON()
     };
     
-    // Save to localStorage
     localStorage.setItem('editorContent', JSON.stringify(content));
     
     // Or send to server
@@ -366,28 +342,7 @@ editor.destroy();
 </script>
 ```
 
-## 🎯 Features
-
-- ✅ **No Dependencies** - Pure vanilla JavaScript
-- ✅ **Rich Text Editing** - Bold, italic, underline, strikethrough, and more
-- ✅ **Headings** - H1 through H6 support
-- ✅ **Lists** - Bulleted and numbered lists with indent/outdent
-- ✅ **Links** - Insert and edit hyperlinks
-- ✅ **Images** - Insert, resize, and align images
-- ✅ **Tables** - Create and edit tables
-- ✅ **Colors** - Text and background color pickers
-- ✅ **Code Blocks** - Inline code and code blocks
-- ✅ **Alignment** - Left, center, right, and justify
-- ✅ **Find & Replace** - Search and replace text
-- ✅ **Fullscreen Mode** - Distraction-free editing
-- ✅ **Word Count** - Track words and characters
-- ✅ **Undo/Redo** - Full history support
-- ✅ **Export** - HTML, plain text, and JSON formats
-- ✅ **Responsive** - Works on all screen sizes
-- ✅ **Customizable** - Flexible toolbar configuration
-- ✅ **Accessible** - Keyboard shortcuts and ARIA support
-
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 - `Ctrl/Cmd + B` - Bold
 - `Ctrl/Cmd + I` - Italic
@@ -397,9 +352,9 @@ editor.destroy();
 - `F11` - Toggle fullscreen
 - `Ctrl/Cmd + F` - Find & Replace
 
-## 🎨 Styling
+## Customization
 
-The editor comes with default styling that you can customize using CSS:
+Custom styling example:
 
 ```css
 /* Customize wrapper */
@@ -426,32 +381,28 @@ The editor comes with default styling that you can customize using CSS:
 }
 ```
 
-## 🌐 Browser Support
+## Browser Compatibility
 
 - Chrome (latest)
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
 
-## 📄 License
+## Links
 
-MIT License - see LICENSE file for details
+- **NPM Package**: https://www.npmjs.com/package/editium
+- **GitHub Repository**: https://github.com/NabarupDev/Editify
+- **Issues**: https://github.com/NabarupDev/Editify/issues
+- **unpkg CDN**: https://unpkg.com/editium@1.0.0/vanilla/
+- **jsDelivr CDN**: https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/
 
-## 🤝 Contributing
+## License
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+MIT License - See [LICENSE](../LICENSE) file for details.
 
-## 📞 Support
+## Contributing
 
-- GitHub Issues: [https://github.com/NabarupDev/Editify/issues](https://github.com/NabarupDev/Editify/issues)
-- Repository: [https://github.com/NabarupDev/Editify](https://github.com/NabarupDev/Editify)
-
-## 🔗 Links
-
-- **unpkg CDN**: `https://unpkg.com/editium@1.0.0/vanilla/`
-- **jsDelivr CDN**: `https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/`
-- **NPM Package**: `https://www.npmjs.com/package/editium`
-- **GitHub**: `https://github.com/NabarupDev/Editify`
+Contributions are welcome! Please submit a Pull Request.
 
 ---
 

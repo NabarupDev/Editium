@@ -1,8 +1,3 @@
-/**
- * Editium - Vanilla JavaScript Rich Text Editor
- * Matching the React version's polished UI
- */
-
 class Editium {
   constructor(options = {}) {
     this.container = options.container;
@@ -14,12 +9,10 @@ class Editium {
     this.className = options.className || '';
     this.onImageUpload = options.onImageUpload || null;
     
-    // Height configuration options with defaults
     this.height = options.height || '200px';
     this.minHeight = options.minHeight || '150px';
     this.maxHeight = options.maxHeight || '250px';
     
-    // State
     this.isFullscreen = false;
     this.searchQuery = '';
     this.searchMatches = [];
@@ -43,16 +36,10 @@ class Editium {
     this.createEditor();
     this.attachEventListeners();
     
-    if (this.editor.innerHTML.trim() === '') {
-      this.editor.innerHTML = '<p><br></p>';
-    }
+    if (this.editor.innerHTML.trim() === '') this.editor.innerHTML = '<p><br></p>';
     
-    // Make any existing images resizable
     this.makeExistingImagesResizable();
-    
-    // Make any existing links non-editable
     this.makeExistingLinksNonEditable();
-    
     this.saveState();
   }
   
@@ -61,9 +48,7 @@ class Editium {
     
     this.wrapper = document.createElement('div');
     this.wrapper.className = `editium-wrapper ${this.className}`;
-    if (this.isFullscreen) {
-      this.wrapper.classList.add('editium-fullscreen');
-    }
+    if (this.isFullscreen) this.wrapper.classList.add('editium-fullscreen');
     
     const toolbarItems = this.toolbar === 'all' ? this.getAllToolbarItems() : this.toolbar;
     
@@ -80,13 +65,11 @@ class Editium {
     this.editor.contentEditable = !this.readOnly;
     this.editor.setAttribute('data-placeholder', this.placeholder);
     
-    // Apply height, minHeight, maxHeight styles (convert numbers to px strings)
     if (!this.isFullscreen) {
       this.editor.style.height = typeof this.height === 'number' ? `${this.height}px` : this.height;
       this.editor.style.minHeight = typeof this.minHeight === 'number' ? `${this.minHeight}px` : this.minHeight;
       this.editor.style.maxHeight = typeof this.maxHeight === 'number' ? `${this.maxHeight}px` : this.maxHeight;
     } else {
-      // Remove height constraints in fullscreen mode
       this.editor.style.height = 'auto';
       this.editor.style.minHeight = 'auto';
       this.editor.style.maxHeight = 'none';
@@ -95,12 +78,10 @@ class Editium {
     this.editorContainer.appendChild(this.editor);
     this.wrapper.appendChild(this.editorContainer);
     
-    if (this.showWordCount) {
-      this.wordCountElement = document.createElement('div');
-      this.wordCountElement.className = 'editium-word-count';
-      this.wrapper.appendChild(this.wordCountElement);
-      this.updateWordCount();
-    }
+    this.wordCountElement = document.createElement('div');
+    this.wordCountElement.className = 'editium-word-count';
+    this.wrapper.appendChild(this.wordCountElement);
+    this.updateWordCount();
     
     this.container.appendChild(this.wrapper);
   }
@@ -131,8 +112,7 @@ class Editium {
   createToolbar(items) {
     const toolbar = document.createElement('div');
     toolbar.className = 'editium-toolbar';
-    
-    // Define groups
+
     const groups = {
       paragraph: ['paragraph', 'heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six'],
       format: ['bold', 'italic', 'underline', 'strikethrough', 'code', 'superscript', 'subscript'],
@@ -145,50 +125,28 @@ class Editium {
       view: ['preview', 'view-html', 'view-json']
     };
     
-    // If using 'all', create organized dropdown groups
     if (this.toolbar === 'all') {
-      // Paragraph dropdown (already exists)
       toolbar.appendChild(this.createBlockFormatDropdown());
-      
-      // Format dropdown
       toolbar.appendChild(this.createGroupDropdown('Format', groups.format));
-      
-      // Align dropdown (already exists)
       toolbar.appendChild(this.createAlignmentDropdown());
-      
-      // Color dropdown
       toolbar.appendChild(this.createGroupDropdown('Color', groups.color));
-      
-      // Blocks dropdown
       toolbar.appendChild(this.createGroupDropdown('Blocks', groups.blocks));
-      
-      // Lists dropdown
       toolbar.appendChild(this.createGroupDropdown('Lists', groups.lists));
-      
-      // Insert dropdown
       toolbar.appendChild(this.createGroupDropdown('Insert', groups.insert));
-      
-      // Edit dropdown
       toolbar.appendChild(this.createGroupDropdown('Edit', groups.edit));
-      
-      // View dropdown
       toolbar.appendChild(this.createGroupDropdown('View', groups.view));
       
-      // Add spacer to push remaining buttons to the right
       const spacer = document.createElement('div');
       spacer.style.flex = '1';
       toolbar.appendChild(spacer);
       
-      // Right-aligned buttons
       const findButton = this.createToolbarButton('find-replace');
       const fullscreenButton = this.createToolbarButton('fullscreen');
       if (findButton) toolbar.appendChild(findButton);
       if (fullscreenButton) toolbar.appendChild(fullscreenButton);
     } else {
-      // Legacy mode - keep old behavior for custom toolbar arrays
       const blockFormats = groups.paragraph;
       const alignments = groups.align;
-      
       let processedGroups = { block: false, align: false };
       
       for (let i = 0; i < items.length; i++) {
@@ -492,15 +450,12 @@ class Editium {
   }
   
   showLinkModal() {
-    // Save the current selection/cursor position BEFORE opening modal
     this.editor.focus();
     const selection = window.getSelection();
     const selectedText = selection.toString();
     let savedRange = null;
     
-    if (selection.rangeCount > 0) {
-      savedRange = selection.getRangeAt(0).cloneRange();
-    }
+    if (selection.rangeCount > 0) savedRange = selection.getRangeAt(0).cloneRange();
     
     const modal = this.createModal('Insert Link', `
       <div style="margin-bottom: 16px;">
@@ -537,8 +492,7 @@ class Editium {
         alert('Please enter a valid URL');
         return false;
       }
-      
-      // Restore the saved selection before inserting the link
+
       if (savedRange) {
         this.editor.focus();
         const sel = window.getSelection();
@@ -558,13 +512,11 @@ class Editium {
         const range = sel.getRangeAt(0);
         range.deleteContents();
         range.insertNode(link);
-        
-        // Add a space after the link for continued typing
+
         const space = document.createTextNode('\u00A0');
         range.setStartAfter(link);
         range.insertNode(space);
-        
-        // Move cursor after the space
+
         range.setStartAfter(space);
         range.setEndAfter(space);
         sel.removeAllRanges();
@@ -582,8 +534,7 @@ class Editium {
   
   showLinkPopup(linkElement) {
     this.selectedLink = linkElement;
-    
-    // Close existing popup if any
+
     this.closeLinkPopup();
     
     const rect = linkElement.getBoundingClientRect();
@@ -669,8 +620,7 @@ class Editium {
         Remove Link
       </button>
     `;
-    
-    // Add hover effects
+
     const buttons = this.linkPopup.querySelectorAll('.editium-link-popup-btn');
     buttons.forEach(btn => {
       btn.addEventListener('mouseenter', () => {
@@ -684,8 +634,7 @@ class Editium {
         btn.style.backgroundColor = 'transparent';
       });
     });
-    
-    // Add click handlers
+
     this.linkPopup.querySelector('.editium-link-open').addEventListener('click', () => {
       window.open(linkElement.href, linkElement.target || '_self');
       this.closeLinkPopup();
@@ -713,7 +662,7 @@ class Editium {
   }
   
   editLink(linkElement) {
-    // Save the link element for later update
+
     const savedLinkElement = linkElement;
     
     const modal = this.createModal('Edit Link', `
@@ -751,8 +700,7 @@ class Editium {
         alert('Please enter a valid URL');
         return false;
       }
-      
-      // Update the link
+
       savedLinkElement.href = url;
       savedLinkElement.textContent = text || url;
       savedLinkElement.title = title;
@@ -769,7 +717,7 @@ class Editium {
   }
   
   removeLink(linkElement) {
-    // Replace the link with its text content
+
     const textNode = document.createTextNode(linkElement.textContent);
     linkElement.parentNode.replaceChild(textNode, linkElement);
     
@@ -778,7 +726,7 @@ class Editium {
   }
   
   showImageModal() {
-    // Save the current selection/cursor position BEFORE opening modal
+
     this.editor.focus();
     const selection = window.getSelection();
     let savedRange = null;
@@ -827,8 +775,7 @@ class Editium {
         alert('Image URL is required');
         return false;
       }
-      
-      // Restore the saved selection before inserting
+
       this.insertImage(url, alt || 'Image', width ? parseInt(width) : null, savedRange);
       
       return true;
@@ -839,36 +786,33 @@ class Editium {
   }
 
   insertImage(url, alt = 'Image', width = null, savedRange = null) {
-    // Restore the saved range if provided
+
     if (savedRange) {
       this.editor.focus();
       const selection = window.getSelection();
       selection.removeAllRanges();
       selection.addRange(savedRange);
     } else {
-      // Focus the editor
+
       this.editor.focus();
     }
-    
-    // Create a wrapper div for the image with alignment controls
+
     const imageWrapper = document.createElement('div');
     imageWrapper.className = 'editium-image-wrapper align-left';
     imageWrapper.contentEditable = 'false';
-    imageWrapper.style.textAlign = 'left'; // Default alignment for HTML output
-    
-    // Create image container
+    imageWrapper.style.textAlign = 'left';
+
     const imageContainer = document.createElement('div');
     imageContainer.style.position = 'relative';
     imageContainer.style.display = 'inline-block';
-    
-    // Create image element
+
     const img = document.createElement('img');
     img.src = url;
     img.alt = alt;
     img.style.maxWidth = '100%';
     img.style.height = 'auto';
     img.style.display = 'block';
-    img.style.marginLeft = '0'; // Default left alignment
+    img.style.marginLeft = '0';
     img.style.marginRight = 'auto';
     img.className = 'resizable';
     img.draggable = false;
@@ -876,43 +820,35 @@ class Editium {
     if (width) {
       img.style.width = width + 'px';
     }
-    
-    // Create toolbar for alignment and actions
+
     const toolbar = this.createImageToolbar(imageWrapper, img);
     
     imageContainer.appendChild(img);
     imageContainer.appendChild(toolbar);
     imageWrapper.appendChild(imageContainer);
-    
-    // Add resize functionality
+
     this.makeImageResizable(img);
-    
-    // Get current selection
+
     const selection = window.getSelection();
     let inserted = false;
     
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
-      
-      // Delete any selected content
+
       range.deleteContents();
-      
-      // Insert the image wrapper at cursor position
+
       try {
         range.insertNode(imageWrapper);
-        
-        // Create a new paragraph after the image for continued editing
+
         const newPara = document.createElement('p');
         newPara.innerHTML = '<br>';
-        
-        // Insert the paragraph after the image wrapper
+
         if (imageWrapper.nextSibling) {
           imageWrapper.parentNode.insertBefore(newPara, imageWrapper.nextSibling);
         } else {
           imageWrapper.parentNode.appendChild(newPara);
         }
-        
-        // Move cursor to the new paragraph
+
         range.setStart(newPara, 0);
         range.setEnd(newPara, 0);
         selection.removeAllRanges();
@@ -923,15 +859,13 @@ class Editium {
         console.error('Error inserting image at cursor:', e);
       }
     }
-    
-    // Fallback: append to editor if insertion at cursor failed
+
     if (!inserted) {
       this.editor.appendChild(imageWrapper);
       const newPara = document.createElement('p');
       newPara.innerHTML = '<br>';
       this.editor.appendChild(newPara);
-      
-      // Move cursor to new paragraph
+
       const range = document.createRange();
       range.setStart(newPara, 0);
       range.setEnd(newPara, 0);
@@ -946,8 +880,7 @@ class Editium {
   createImageToolbar(wrapper, img) {
     const toolbar = document.createElement('div');
     toolbar.className = 'editium-image-toolbar';
-    
-    // Alignment buttons group
+
     const alignmentGroup = document.createElement('div');
     alignmentGroup.className = 'editium-image-toolbar-group';
     
@@ -966,8 +899,7 @@ class Editium {
         e.preventDefault();
         e.stopPropagation();
         this.changeImageAlignment(wrapper, align.value);
-        
-        // Update active state
+
         alignmentGroup.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
       };
@@ -975,12 +907,10 @@ class Editium {
     });
     
     toolbar.appendChild(alignmentGroup);
-    
-    // Action buttons group
+
     const actionGroup = document.createElement('div');
     actionGroup.className = 'editium-image-toolbar-group';
-    
-    // Remove button
+
     const removeBtn = document.createElement('button');
     removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
     removeBtn.title = 'Remove Image';
@@ -1002,18 +932,16 @@ class Editium {
   }
 
   changeImageAlignment(wrapper, alignment) {
-    // Remove all alignment classes
+
     wrapper.classList.remove('align-left', 'align-center', 'align-right');
-    
-    // Add new alignment class for visual styling
+
     wrapper.classList.add(`align-${alignment}`);
-    
-    // Also add inline styles so alignment is preserved in HTML output
+
     const container = wrapper.querySelector('div[style*="position: relative"]');
     const img = wrapper.querySelector('img');
     
     if (container && img) {
-      // Apply text-align to wrapper for HTML output
+
       if (alignment === 'left') {
         wrapper.style.textAlign = 'left';
         img.style.marginLeft = '0';
@@ -1080,13 +1008,11 @@ class Editium {
       this.saveState();
       this.triggerChange();
     };
-    
-    // Add resize handle on the right edge
+
     img.addEventListener('mousedown', (e) => {
       const rect = img.getBoundingClientRect();
       const offsetX = e.clientX - rect.left;
-      
-      // Check if click is near the right edge (within 20px)
+
       if (offsetX > rect.width - 20) {
         startResize(e);
       }
@@ -1096,8 +1022,7 @@ class Editium {
       const rect = img.getBoundingClientRect();
       const touch = e.touches[0];
       const offsetX = touch.clientX - rect.left;
-      
-      // Check if touch is near the right edge (within 20px)
+
       if (offsetX > rect.width - 20) {
         startResize(e);
       }
@@ -1259,17 +1184,17 @@ class Editium {
     this.isFullscreen = !this.isFullscreen;
     if (this.isFullscreen) {
       this.wrapper.classList.add('editium-fullscreen');
-      // Block background scroll
+
       document.body.classList.add('editium-fullscreen-active');
-      // Remove height constraints in fullscreen mode
+
       this.editor.style.height = 'auto';
       this.editor.style.minHeight = 'auto';
       this.editor.style.maxHeight = 'none';
     } else {
       this.wrapper.classList.remove('editium-fullscreen');
-      // Restore background scroll
+
       document.body.classList.remove('editium-fullscreen-active');
-      // Restore height constraints when exiting fullscreen
+
       this.editor.style.height = typeof this.height === 'number' ? `${this.height}px` : this.height;
       this.editor.style.minHeight = typeof this.minHeight === 'number' ? `${this.minHeight}px` : this.minHeight;
       this.editor.style.maxHeight = typeof this.maxHeight === 'number' ? `${this.maxHeight}px` : this.maxHeight;
@@ -1341,8 +1266,7 @@ class Editium {
     const replaceBtn = panel.querySelector('.editium-btn-replace');
     const replaceAllBtn = panel.querySelector('.editium-btn-replace-all');
     const closeBtn = panel.querySelector('.editium-btn-close');
-    
-    // Input focus/blur handlers
+
     findInput.addEventListener('focus', () => {
       if (!this.searchQuery || this.searchMatches.length > 0) {
         findInput.style.borderColor = '#3b82f6';
@@ -1364,8 +1288,7 @@ class Editium {
     replaceInput.addEventListener('blur', () => {
       replaceInput.style.borderColor = '#d1d5db';
     });
-    
-    // Search input handler
+
     findInput.addEventListener('input', () => {
       this.searchQuery = findInput.value;
       this.performSearch();
@@ -1403,8 +1326,7 @@ class Editium {
         replaceAllBtn.disabled = true;
       }
     });
-    
-    // Navigation handlers
+
     prevBtn.onclick = () => {
       this.navigateSearch(-1, matchInfo);
     };
@@ -1412,8 +1334,7 @@ class Editium {
     nextBtn.onclick = () => {
       this.navigateSearch(1, matchInfo);
     };
-    
-    // Button hover effects
+
     [prevBtn, nextBtn].forEach(btn => {
       btn.addEventListener('mouseenter', () => {
         if (this.searchMatches.length > 0) {
@@ -1463,8 +1384,7 @@ class Editium {
       closeBtn.style.borderColor = '#d1d5db';
       closeBtn.style.color = '#6b7280';
     });
-    
-    // Replace handlers
+
     replaceBtn.onclick = () => {
       this.replaceCurrentMatch(replaceInput.value, matchInfo);
     };
@@ -1496,14 +1416,13 @@ class Editium {
     
     const searchLower = this.searchQuery.toLowerCase();
     const matches = [];
-    
-    // Get all text nodes in the editor
+
     const walker = document.createTreeWalker(
       this.editor,
       NodeFilter.SHOW_TEXT,
       {
         acceptNode: (node) => {
-          // Skip text nodes that are inside our mark elements
+
           if (node.parentElement && node.parentElement.classList.contains('editium-search-match')) {
             return NodeFilter.FILTER_REJECT;
           }
@@ -1521,8 +1440,7 @@ class Editium {
     while (currentNode = walker.nextNode()) {
       nodesToProcess.push(currentNode);
     }
-    
-    // Find all matches
+
     nodesToProcess.forEach(node => {
       const text = node.textContent;
       const textLower = text.toLowerCase();
@@ -1534,7 +1452,7 @@ class Editium {
           offset: index,
           length: this.searchQuery.length
         });
-        index += 1; // Move to next character to find overlapping matches
+        index += 1;
       }
     });
     
@@ -1547,29 +1465,27 @@ class Editium {
   }
   
   highlightAllMatches() {
-    // Process matches in reverse order to avoid messing up indices
+
     const sortedMatches = [...this.searchMatches].reverse();
     
     sortedMatches.forEach((match, reverseIdx) => {
       const actualIdx = this.searchMatches.length - 1 - reverseIdx;
       const { node, offset, length } = match;
       
-      if (!node.parentNode) return; // Node might have been removed
+      if (!node.parentNode) return;
       
       try {
-        // Split the text node at the match boundaries
+
         const text = node.textContent;
         const before = text.substring(0, offset);
         const matchText = text.substring(offset, offset + length);
         const after = text.substring(offset + length);
-        
-        // Create the mark element
+
         const mark = document.createElement('mark');
         const isCurrent = actualIdx === this.currentMatchIndex;
         mark.className = isCurrent ? 'editium-search-current' : 'editium-search-match';
         mark.textContent = matchText;
-        
-        // Apply styles based on whether it's the current match
+
         if (isCurrent) {
           mark.style.backgroundColor = '#ff9800';
           mark.style.color = '#ffffff';
@@ -1581,8 +1497,7 @@ class Editium {
         }
         mark.style.padding = '2px 4px';
         mark.style.borderRadius = '2px';
-        
-        // Create new text nodes
+
         const parent = node.parentNode;
         const fragment = document.createDocumentFragment();
         
@@ -1593,16 +1508,14 @@ class Editium {
         if (after) {
           fragment.appendChild(document.createTextNode(after));
         }
-        
-        // Replace the original text node
+
         parent.replaceChild(fragment, node);
         
       } catch (e) {
         console.warn('Failed to highlight match:', e);
       }
     });
-    
-    // Scroll to current match
+
     if (this.searchMatches.length > 0) {
       setTimeout(() => {
         const currentMark = this.editor.querySelector('[data-current-match="true"]');
@@ -1626,19 +1539,16 @@ class Editium {
   
   navigateSearch(direction, matchInfoElement) {
     if (this.searchMatches.length === 0) return;
-    
-    // Update index first
+
     this.currentMatchIndex += direction;
     if (this.currentMatchIndex < 0) {
       this.currentMatchIndex = this.searchMatches.length - 1;
     } else if (this.currentMatchIndex >= this.searchMatches.length) {
       this.currentMatchIndex = 0;
     }
-    
-    // Clear highlights and re-search to get fresh node references
+
     this.clearHighlights();
-    
-    // Re-find all matches with fresh node references
+
     const searchLower = this.searchQuery.toLowerCase();
     const matches = [];
     
@@ -1681,13 +1591,11 @@ class Editium {
     });
     
     this.searchMatches = matches;
-    
-    // Now highlight with the updated currentMatchIndex
+
     if (this.searchMatches.length > 0) {
       this.highlightAllMatches();
     }
-    
-    // Update match info display
+
     if (matchInfoElement) {
       matchInfoElement.textContent = this.searchMatches.length > 0 
         ? `${this.currentMatchIndex + 1} of ${this.searchMatches.length}`
@@ -1756,8 +1664,7 @@ class Editium {
     if (type === 'html') {
       content = this.formatHTML(this.getHTML());
       title = 'HTML Output';
-      
-      // If content is empty, show a message
+
       if (!content || content.trim() === '') {
         content = '<!-- No content -->';
       }
@@ -1869,19 +1776,17 @@ class Editium {
     let indentLevel = 0;
     const tab = '  ';
     let formattedHTML = '';
-    
-    // Split HTML into tags and text, preserving structure
+
     const rawTokens = html.split(/(<[^>]+>)/);
-    
-    // Filter out empty strings but keep whitespace info
+
     const tokens = [];
     for (let i = 0; i < rawTokens.length; i++) {
       const token = rawTokens[i];
       if (token.startsWith('<') && token.endsWith('>')) {
-        // It's a tag - add as is
+
         tokens.push({ type: 'tag', content: token });
       } else if (token.trim()) {
-        // It's text content - trim but remember if it had leading/trailing spaces
+
         tokens.push({ type: 'text', content: token.trim() });
       }
     }
@@ -1933,29 +1838,27 @@ class Editium {
             indentLevel++;
           }
         } else if (isInline) {
-          // Inline tag
+
           if (onNewLine) {
             formattedHTML += tab.repeat(indentLevel);
             onNewLine = false;
           }
-          
-          // Add space before opening inline tag if preceded by text
+
           if (!isClosing && prevToken && prevToken.type === 'text') {
             formattedHTML += ' ';
           }
           
           formattedHTML += tag;
-          
-          // Add space after closing inline tag if followed by text
+
           if (isClosing && nextToken && nextToken.type === 'text') {
             formattedHTML += ' ';
           }
         } else {
-          // Other tags
+
           formattedHTML += tag;
         }
       } else if (token.type === 'text') {
-        // Text content
+
         if (onNewLine) {
           formattedHTML += tab.repeat(indentLevel);
           onNewLine = false;
@@ -1969,36 +1872,36 @@ class Editium {
   }
   
   highlightCode(code, type) {
-    // ALWAYS escape HTML first to prevent rendering
+
     const escaped = this.escapeHtml(code);
     
     if (type === 'html') {
-      // Simple HTML syntax highlighting - be careful with order of replacements
+
       return escaped
-        // First, highlight complete tags (opening brackets + tag names + closing brackets together)
+
         .replace(/(&lt;\/?)([a-z][a-z0-9]*)(\s[^&]*?)?(&gt;)/gi, (match, open, tagName, attrs, close) => {
           let result = open + '<span style="color:#e06c75;">' + tagName + '</span>';
           if (attrs) {
-            // Highlight attributes within the tag
+
             result += attrs.replace(/\s([a-z-]+)(=)(&quot;[^&quot;]*&quot;)/gi, ' <span style="color:#d19a66;">$1</span>=<span style="color:#98c379;">$3</span>');
           }
           result += close;
           return result;
         });
     } else if (type === 'json') {
-      // Simple JSON syntax highlighting with better patterns
+
       return escaped
-        // Highlight property keys (including "html", "text", etc.)
+
         .replace(/(&quot;)(.*?)(&quot;)(\s*:)/g, '<span style="color:#e06c75;">$1$2$3</span><span style="color:#abb2bf;">$4</span>')
-        // Highlight string values (after colons)
+
         .replace(/(:)(\s*)(&quot;)((?:[^&]|&(?!quot;))*?)(&quot;)/g, '$1$2<span style="color:#98c379;">$3$4$5</span>')
-        // Highlight numbers
+
         .replace(/:\s*(-?\d+\.?\d*)/g, ': <span style="color:#d19a66;">$1</span>')
-        // Highlight booleans and null
+
         .replace(/:\s*(true|false|null)/g, ': <span style="color:#56b6c2;">$1</span>')
-        // Highlight brackets and braces
+
         .replace(/([{}\[\]])/g, '<span style="color:#abb2bf;">$1</span>')
-        // Highlight commas
+
         .replace(/(,)/g, '<span style="color:#abb2bf;">$1</span>');
     }
     
@@ -2066,12 +1969,12 @@ class Editium {
         e.preventDefault();
         this.execCommand('underline');
       } else if (e.ctrlKey && e.key === 'k') {
-        // Ctrl+K to edit link if cursor is inside a link
+
         e.preventDefault();
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
           let node = selection.anchorNode;
-          // Find the parent link element if we're inside one
+
           while (node && node !== this.editor) {
             if (node.nodeType === 1 && node.tagName === 'A') {
               this.editLink(node);
@@ -2080,7 +1983,7 @@ class Editium {
             node = node.parentNode;
           }
         }
-        // If not in a link, open the insert link modal
+
         this.showLinkModal();
       } else if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -2095,7 +1998,7 @@ class Editium {
         e.preventDefault();
         this.toggleFullscreen();
       } else if (e.key === 'Escape' && this.linkPopup) {
-        // Close link popup with Escape key
+
         e.preventDefault();
         this.closeLinkPopup();
       }
@@ -2103,24 +2006,22 @@ class Editium {
     
     this.editor.addEventListener('mouseup', () => this.updateToolbarStates());
     this.editor.addEventListener('keyup', () => this.updateToolbarStates());
-    
-    // Prevent direct editing of link text - force users to use the edit modal
+
     this.editor.addEventListener('beforeinput', (e) => {
       const selection = window.getSelection();
       if (selection.rangeCount > 0) {
         let node = selection.anchorNode;
-        
-        // Check if we're inside a link element
+
         while (node && node !== this.editor) {
           if (node.nodeType === 1 && node.tagName === 'A') {
-            // Block any input that would modify link content
+
             if (e.inputType.startsWith('delete') || 
                 e.inputType.startsWith('insert') || 
                 e.inputType.startsWith('format') ||
                 e.inputType === 'historyUndo' ||
                 e.inputType === 'historyRedo') {
               e.preventDefault();
-              // Show a brief visual feedback
+
               node.style.backgroundColor = 'rgba(255, 152, 0, 0.2)';
               setTimeout(() => {
                 node.style.backgroundColor = '';
@@ -2132,16 +2033,14 @@ class Editium {
         }
       }
     });
-    
-    // Handle link clicks - always prevent default and show popup
+
     this.editor.addEventListener('click', (e) => {
       if (e.target.tagName === 'A') {
         e.preventDefault();
         this.showLinkPopup(e.target);
       }
     });
-    
-    // Prevent text selection in links
+
     this.editor.addEventListener('mousedown', (e) => {
       if (e.target.tagName === 'A') {
         e.preventDefault();
@@ -2152,7 +2051,7 @@ class Editium {
       if (!e.target.closest('.editium-dropdown')) {
         this.closeDropdown();
       }
-      // Close link popup when clicking outside
+
       if (this.linkPopup && !e.target.closest('.editium-link-popup') && !e.target.closest('a')) {
         this.closeLinkPopup();
       }
@@ -2181,19 +2080,27 @@ class Editium {
   updateWordCount() {
     if (!this.wordCountElement) return;
     
-    const text = this.editor.textContent || '';
-    const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
-    const chars = text.length;
-    const charsNoSpaces = text.replace(/\s/g, '').length;
+    let statsHTML = '';
+    
+    if (this.showWordCount) {
+      const text = this.editor.textContent || '';
+      const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+      const chars = text.length;
+      const charsNoSpaces = text.replace(/\s/g, '').length;
+      
+      statsHTML = `
+        <div class="editium-word-count-stats">
+          <span>Words: ${words}</span>
+          <span>Characters: ${chars}</span>
+          <span>Characters (no spaces): ${charsNoSpaces}</span>
+        </div>
+      `;
+    }
     
     this.wordCountElement.innerHTML = `
-      <div class="editium-word-count-stats">
-        <span>Words: ${words}</span>
-        <span>Characters: ${chars}</span>
-        <span>Characters (no spaces): ${charsNoSpaces}</span>
-      </div>
+      ${statsHTML}
       <div class="editium-word-count-branding">
-        Built with <span class="editium-brand">Editium</span>
+        Built with <a href="https://www.npmjs.com/package/editium" target="_blank" rel="noopener noreferrer" class="editium-brand">Editium</a>
       </div>
     `;
   }
@@ -2207,40 +2114,35 @@ class Editium {
   }
   
   getHTML() {
-    // Clone the editor content to avoid modifying the actual DOM
+
     const clone = this.editor.cloneNode(true);
-    
-    // Remove all image toolbars from the clone
+
     const toolbars = clone.querySelectorAll('.editium-image-toolbar');
     toolbars.forEach(toolbar => toolbar.remove());
-    
-    // Clean up image wrappers - keep structure but remove editor-specific attributes
+
     const wrappers = clone.querySelectorAll('.editium-image-wrapper');
     wrappers.forEach(wrapper => {
-      // Remove editor-specific classes, keep alignment
+
       const alignment = wrapper.classList.contains('align-center') ? 'center' :
                        wrapper.classList.contains('align-right') ? 'right' : 'left';
       
-      wrapper.className = ''; // Remove all classes
+      wrapper.className = '';
       wrapper.removeAttribute('contenteditable');
-      
-      // Ensure text-align is set for proper HTML output
+
       wrapper.style.textAlign = alignment;
       wrapper.style.margin = '10px 0';
       wrapper.style.display = 'block';
     });
-    
-    // Clean up image containers
+
     const containers = clone.querySelectorAll('div[style*="position: relative"]');
     containers.forEach(container => {
       if (container.querySelector('img')) {
-        // This is an image container, simplify it
+
         container.style.position = '';
         container.style.display = '';
       }
     });
-    
-    // Remove editor-specific classes from images
+
     const images = clone.querySelectorAll('img');
     images.forEach(img => {
       img.classList.remove('resizable', 'resizing');
@@ -2248,8 +2150,7 @@ class Editium {
     });
     
     let html = clone.innerHTML;
-    
-    // If the content is just an empty paragraph or heading with a br, return empty string
+
     if (html === '<p><br></p>' || html === '<h1><br></h1>' || html.match(/^<[^>]+><br><\/[^>]+>$/)) {
       return '';
     }
@@ -2264,11 +2165,9 @@ class Editium {
   getJSON() {
     const nodes = [];
     const editorContent = this.editor.cloneNode(true);
-    
-    // Remove image toolbars and other UI elements
+
     editorContent.querySelectorAll('.editium-image-toolbar').forEach(el => el.remove());
-    
-    // Parse each child node
+
     Array.from(editorContent.childNodes).forEach(node => {
       const parsed = this.parseNodeToJSON(node);
       if (parsed) {
@@ -2280,18 +2179,16 @@ class Editium {
   }
   
   parseNodeToJSON(node) {
-    // Skip empty text nodes
+
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.textContent;
       if (text.trim() === '') return null;
       return { text: text };
     }
-    
-    // Handle element nodes
+
     if (node.nodeType === Node.ELEMENT_NODE) {
       const tagName = node.tagName.toLowerCase();
-      
-      // Map HTML tags to JSON types
+
       const typeMap = {
         'p': 'paragraph',
         'h1': 'heading-one',
@@ -2316,8 +2213,7 @@ class Editium {
       
       const type = typeMap[tagName] || 'paragraph';
       const result = { type };
-      
-      // Handle special cases
+
       if (tagName === 'a') {
         result.url = node.getAttribute('href') || '';
       } else if (tagName === 'img') {
@@ -2332,17 +2228,16 @@ class Editium {
       } else if (tagName === 'hr') {
         return { type: 'horizontal-rule' };
       } else if (tagName === 'br') {
-        return null; // Skip br tags
+        return null; 
       } else if (tagName === 'div' && node.classList.contains('editium-image-wrapper')) {
-        // Parse the image inside the wrapper
+
         const img = node.querySelector('img');
         if (img) {
           return this.parseNodeToJSON(img);
         }
         return null;
       }
-      
-      // Parse children
+
       const children = [];
       Array.from(node.childNodes).forEach(child => {
         const parsed = this.parseInlineNode(child);
@@ -2350,8 +2245,7 @@ class Editium {
           children.push(parsed);
         }
       });
-      
-      // If no children, add empty text node
+
       if (children.length === 0) {
         children.push({ text: '' });
       }
@@ -2364,18 +2258,16 @@ class Editium {
   }
   
   parseInlineNode(node) {
-    // Text node
+
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.textContent;
       if (text === '') return null;
       return { text: text };
     }
-    
-    // Element node
+
     if (node.nodeType === Node.ELEMENT_NODE) {
       const tagName = node.tagName.toLowerCase();
-      
-      // Handle formatting marks
+
       const marks = {};
       
       if (tagName === 'strong' || tagName === 'b') {
@@ -2399,7 +2291,7 @@ class Editium {
           children: this.parseInlineChildren(node)
         };
       } else if (tagName === 'span') {
-        // Handle colored text
+
         const style = node.getAttribute('style') || '';
         if (style.includes('color:')) {
           const colorMatch = style.match(/color:\s*([^;]+)/);
@@ -2416,7 +2308,7 @@ class Editium {
       } else if (tagName === 'br') {
         return { text: '\n' };
       } else if (tagName === 'img') {
-        // Inline image
+
         return {
           type: 'image',
           url: node.getAttribute('src') || '',
@@ -2424,17 +2316,14 @@ class Editium {
           children: [{ text: '' }]
         };
       }
-      
-      // If it's a block element, handle differently
+
       const blockElements = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'pre', 'table', 'tr', 'td', 'th'];
       if (blockElements.includes(tagName)) {
         return this.parseNodeToJSON(node);
       }
-      
-      // Parse children and apply marks
+
       const children = this.parseInlineChildren(node);
-      
-      // Apply marks to all text children
+
       return children.map(child => {
         if (child.text !== undefined) {
           return { ...child, ...marks };
@@ -2472,8 +2361,7 @@ class Editium {
     } else if (typeof content === 'object' && content.content) {
       this.editor.innerHTML = content.content;
     }
-    
-    // Make all existing images resizable
+
     this.makeExistingImagesResizable();
     
     this.saveState();
@@ -2483,18 +2371,17 @@ class Editium {
   makeExistingImagesResizable() {
     const images = this.editor.querySelectorAll('img');
     images.forEach(img => {
-      // Check if image is already wrapped
+
       const parent = img.parentElement;
       
       if (parent && parent.classList.contains('editium-image-wrapper')) {
-        // Already wrapped, just make sure it's resizable
+
         if (!img.classList.contains('resizable')) {
           img.classList.add('resizable');
           img.draggable = false;
           this.makeImageResizable(img);
         }
-        
-        // Make sure toolbar exists
+
         if (!parent.querySelector('.editium-image-toolbar')) {
           const toolbar = this.createImageToolbar(parent, img);
           const container = img.parentElement;
@@ -2503,22 +2390,20 @@ class Editium {
           }
         }
       } else {
-        // Need to wrap the image
+
         const wrapper = document.createElement('div');
         wrapper.className = 'editium-image-wrapper align-left';
         wrapper.contentEditable = 'false';
-        wrapper.style.textAlign = 'left'; // Default alignment
+        wrapper.style.textAlign = 'left';
         
         const container = document.createElement('div');
         container.style.position = 'relative';
         container.style.display = 'inline-block';
-        
-        // Replace img with wrapped version
+
         img.parentNode.insertBefore(wrapper, img);
         img.classList.add('resizable');
         img.draggable = false;
-        
-        // Set default alignment styles
+
         if (!img.style.marginLeft && !img.style.marginRight) {
           img.style.marginLeft = '0';
           img.style.marginRight = 'auto';
@@ -2552,7 +2437,7 @@ class Editium {
   }
   
   destroy() {
-    // Clean up fullscreen state if active
+
     if (this.isFullscreen) {
       document.body.classList.remove('editium-fullscreen-active');
     }
@@ -2560,7 +2445,6 @@ class Editium {
   }
 }
 
-// Export
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = Editium;
 }

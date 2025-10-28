@@ -7,50 +7,104 @@
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/editium?style=flat-square)](https://bundlephobia.com/package/editium)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 
-**A powerful and feature-rich React rich text editor component built with Slate.js**
+**Production-ready rich text editor for React and Vanilla JavaScript**
 
-[Live Demo](https://editium.vercel.app/) •
-[Quick Start](#quick-start) •
-[Installation](#installation) •
-[Features](#features) •
-[API](#api-reference)
+Modern • Lightweight • Customizable • Zero Dependencies (Vanilla)
+
+[Quick Start](#quick-start) • [Documentation](#documentation) • [Examples](#examples) • [API Reference](#api-reference)
 
 </div>
 
-<br />
+---
 
 ## Overview
 
-Editium is a modern, extensible rich text editor designed for React applications. Built on top of Slate.js, it provides a flexible and customizable editing experience with a comprehensive set of formatting tools, block-level elements, and advanced features. The editor supports both HTML and JSON output formats, making it suitable for content management systems, document editors, blogging platforms, and any application requiring rich text editing capabilities.
+Editium is a flexible rich text editor that works seamlessly in both **React** and **Vanilla JavaScript** environments. Built for developers who need a reliable, feature-rich editor without the complexity.
 
-## Features
+**Why Editium?**
 
-### Text Formatting
-- **Inline Styles**: Bold, italic, underline, strikethrough, superscript, subscript
-- **Code Formatting**: Inline code with syntax highlighting
-- **Text Colors**: Custom text colors and background colors
-- **Typography**: Multiple heading levels (H1-H8)
+- **Dual-Mode Support**: Same powerful features in React (Slate.js) and Vanilla JS (pure JavaScript)
+- **Production Ready**: Battle-tested with comprehensive formatting tools and advanced features
+- **Developer Experience**: Get from npm install to working editor in under 60 seconds
+- **Export Flexibility**: HTML, JSON, and plain text output formats
+- **Fully Customizable**: Configure exactly what you need, hide what you don't
 
-### Block Elements
-- **Lists**: Bulleted and numbered lists with nested support
-- **Blockquotes**: Quote formatting for emphasized content
-- **Code Blocks**: Multi-line code blocks with proper formatting
-- **Horizontal Rules**: Visual section separators
-- **Text Alignment**: Left, center, right, and justify alignment options
+---
 
-### Advanced Features
-- **Tables**: Full table support with add/remove rows and columns
-- **Images**: Resizable images with alignment options and custom upload handlers
-- **Links**: Hyperlink management with title and target attributes
-- **Find & Replace**: Built-in search functionality with match highlighting
-- **Undo/Redo**: Complete history management
-- **Fullscreen Mode**: Distraction-free editing experience
-- **Word & Character Count**: Real-time content statistics
-- **Keyboard Shortcuts**: Efficient editing with standard shortcuts (Ctrl+B, Ctrl+I, etc.)
+## Quick Start
 
-### Output Formats
-- **HTML Export**: Clean, semantic HTML output
-- **JSON Export**: Structured document format for storage and processing
+### React
+
+```bash
+npm install editium
+```
+
+```tsx
+import { Editium } from 'editium';
+
+function App() {
+  return <Editium placeholder="Start typing..." toolbar="all" />;
+}
+```
+
+### Vanilla JavaScript
+
+**Single file - no build step required:**
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
+</head>
+<body>
+  <div id="editor"></div>
+  
+  <script>
+    const editor = new Editium({
+      container: document.getElementById('editor'),
+      placeholder: 'Start typing...',
+      toolbar: 'all'
+    });
+  </script>
+</body>
+</html>
+```
+
+**[See live demo →](https://editium.vercel.app/)**
+
+---
+
+## Key Features
+
+**Rich Text Editing**
+- Comprehensive formatting: bold, italic, underline, strikethrough, code
+- 8 heading levels, blockquotes, and code blocks
+- Text and background colors
+- Superscript and subscript
+
+**Advanced Capabilities**
+- Full table support with dynamic rows/columns
+- Resizable images with custom upload handlers
+- Bulleted and numbered lists with nesting
+- Find and replace with match highlighting
+- Text alignment (left, center, right, justify)
+
+**Developer Experience**
+- TypeScript support with full type definitions
+- HTML and JSON export formats
+- Customizable toolbar (show only what you need)
+- Keyboard shortcuts for efficient editing
+- Read-only mode for content display
+- Word and character counting
+- Fullscreen editing mode
+
+**Framework Flexibility**
+- **React**: Component-based with hooks support
+- **Vanilla JS**: Zero dependencies, works anywhere
+- Same API and features across both versions
+
+---
 
 ## Installation
 
@@ -58,368 +112,313 @@ Editium is a modern, extensible rich text editor designed for React applications
 npm install editium
 ```
 
-### Peer Dependencies
-
-Editium requires React 16.8.0 or higher:
-
+**Peer dependencies (React only):**
 ```bash
 npm install react react-dom
 ```
 
-## Quick Start
+**CDN (Vanilla JS):**
+```html
+<script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
+```
 
-### With All Toolbar Items
+---
 
-The simplest way to get started with all features enabled. Use `"all"` to include every available toolbar item:
+## Documentation
+
+### React Usage
+
+**Basic Example**
 
 ```tsx
 import { Editium } from 'editium';
 
-function FullFeaturedEditor() {
-  return (
-    <Editium
-      toolbar="all"
-      placeholder="Start typing..."
-      showWordCount={true}
-    />
-  );
+function App() {
+  return <Editium toolbar="all" placeholder="Start typing..." />;
 }
 ```
 
-This automatically includes all available toolbar items in a logical, organized order.
-
-### Basic Usage
-
-A minimal setup with just the onChange handler:
+**With Content Management**
 
 ```tsx
 import React, { useState } from 'react';
 import { Editium } from 'editium';
 
-function App() {
-  const [htmlOutput, setHtmlOutput] = useState('');
-  const [jsonOutput, setJsonOutput] = useState([]);
+function Editor() {
+  const [content, setContent] = useState({ html: '', json: [] });
 
-  const handleChange = (html, json) => {
-    setHtmlOutput(html);
-    setJsonOutput(json);
-  };
-
-  return (
-    <div>
-      <Editium
-        onChange={handleChange}
-        placeholder="Start typing..."
-      />
-    </div>
-  );
-}
-
-export default App;
-```
-
-### With Custom Toolbar
-
-Customize the toolbar by selecting only the items you need:
-
-```tsx
-import { Editium } from 'editium';
-
-function MyEditor() {
   return (
     <Editium
-      toolbar={[
-        'bold',
-        'italic',
-        'underline',
-        'strikethrough',
-        'separator',
-        'heading-one',
-        'heading-two',
-        'separator',
-        'bulleted-list',
-        'numbered-list',
-        'separator',
-        'link',
-        'image',
-        'table',
-        'separator',
-        'text-color',
-        'bg-color',
-        'separator',
-        'find-replace',
-        'fullscreen',
-        'view-output'
-      ]}
-      placeholder="Write something amazing..."
+      toolbar="all"
+      onChange={(html, json) => setContent({ html, json })}
       showWordCount={true}
     />
   );
 }
 ```
 
-### With Initial Content
+**Custom Toolbar**
 
 ```tsx
-import { Editium } from 'editium';
-
-const initialContent = [
-  {
-    type: 'heading-one',
-    children: [{ text: 'Welcome to Editium' }],
-  },
-  {
-    type: 'paragraph',
-    children: [
-      { text: 'This is a ' },
-      { text: 'powerful', bold: true },
-      { text: ' rich text editor.' },
-    ],
-  },
-];
-
-function EditorWithContent() {
-  return <Editium initialValue={initialContent} />;
-}
-```
-
-### Custom Height Configuration
-
-Control the editor's height for different use cases:
-
-**Fixed Height:**
-```tsx
-<Editium
-  toolbar={['bold', 'italic', 'underline']}
-  height={400}  // Fixed height of 400px
-  placeholder="Editor with fixed height..."
+<Editium 
+  toolbar={[
+    'bold', 'italic', 'underline',
+    'separator',
+    'heading-one', 'heading-two',
+    'separator',
+    'bulleted-list', 'numbered-list',
+    'link', 'image'
+  ]}
 />
 ```
 
-**Responsive Height with Min/Max:**
-```tsx
-<Editium
-  toolbar={['bold', 'italic', 'underline', 'link']}
-  minHeight="150px"  // Minimum height
-  maxHeight="500px"  // Maximum height
-  placeholder="Editor grows between 150px and 500px..."
-/>
-```
+**[→ Full React Documentation](./react/README.md)**
 
-**Using String Values:**
-```tsx
-<Editium
-  height="60vh"  // Viewport-relative height
-  placeholder="Editor takes 60% of viewport height..."
-/>
-```
+### Vanilla JavaScript Usage
 
-## Output Format
-
-### HTML Output
-
-Editium generates clean, semantic HTML that can be rendered directly in web applications:
+**CDN (Recommended)**
 
 ```html
-<h1>Document Title</h1>
-<p>This is a <strong>bold</strong> paragraph with <em>italic</em> text.</p>
-<ul>
-  <li>List item 1</li>
-  <li>List item 2</li>
-</ul>
-<table style="border-collapse: collapse; width: 100%;">
-  <tr>
-    <td style="border: 1px solid #ddd; padding: 8px;">Cell 1</td>
-    <td style="border: 1px solid #ddd; padding: 8px;">Cell 2</td>
-  </tr>
-</table>
+<script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
+
+<div id="editor"></div>
+
+<script>
+  const editor = new Editium({
+    container: document.getElementById('editor'),
+    toolbar: 'all',
+    placeholder: 'Start typing...'
+  });
+  
+  // Get content
+  const html = editor.getHTML();
+  const json = editor.getJSON();
+</script>
 ```
 
-### JSON Output
+**NPM**
 
-The structured JSON format preserves the complete document structure:
+```javascript
+import 'editium/vanilla/editium.css';
+import Editium from 'editium/vanilla/editium.js';
 
-```json
-[
-  {
-    "type": "heading-one",
-    "children": [{ "text": "Document Title" }]
-  },
-  {
-    "type": "paragraph",
-    "children": [
-      { "text": "This is a " },
-      { "text": "bold", "bold": true },
-      { "text": " paragraph with " },
-      { "text": "italic", "italic": true },
-      { "text": " text." }
-    ]
-  }
-]
+const editor = new Editium({
+  container: document.getElementById('editor'),
+  toolbar: 'all'
+});
 ```
+
+**[→ Full Vanilla JS Documentation](./vanilla/README.md)**
+
+---
 
 ## API Reference
 
-### EditiumProps
+### React Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `initialValue` | `string \| CustomElement[]` | `undefined` | Initial content for the editor |
-| `onChange` | `(html: string, json: CustomElement[]) => void` | `undefined` | Callback fired when content changes |
-| `toolbar` | `ToolbarItem[] \| 'all'` | Basic toolbar | Array of toolbar items to display, or `'all'` for all items |
-| `placeholder` | `string` | `'Start typing...'` | Placeholder text for empty editor |
-| `className` | `string` | `''` | Additional CSS class for the editor container |
-| `style` | `React.CSSProperties` | `{}` | Inline styles for the editor container |
-| `readOnly` | `boolean` | `false` | Makes the editor read-only |
-| `onImageUpload` | `(file: File) => Promise<string>` | `undefined` | Handler for image uploads, returns image URL |
-| `searchQuery` | `string` | `undefined` | External search query for controlled search |
-| `searchMatches` | `Array` | `undefined` | External search matches for controlled search |
-| `currentMatchIndex` | `number` | `undefined` | External current match index for controlled search |
-| `showWordCount` | `boolean` | `false` | Display word and character count |
-| `height` | `string \| number` | `'200px'` | Height for the editor (e.g., '400px' or 400) |
-| `minHeight` | `string \| number` | `'150px'` | Minimum height for the editor |
-| `maxHeight` | `string \| number` | `'250px'` | Maximum height for the editor |
+| `toolbar` | `ToolbarItem[] \| 'all'` | Basic items | Toolbar configuration |
+| `placeholder` | `string` | `'Start typing...'` | Placeholder text |
+| `onChange` | `(html, json) => void` | - | Content change callback |
+| `initialValue` | `string \| CustomElement[]` | - | Initial content |
+| `readOnly` | `boolean` | `false` | Read-only mode |
+| `showWordCount` | `boolean` | `false` | Show word/character count |
+| `height` | `string \| number` | `'200px'` | Editor height |
+| `onImageUpload` | `(file: File) => Promise<string>` | - | Custom image upload |
+
+### Vanilla JS Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `container` | `HTMLElement` | required | DOM element for editor |
+| `toolbar` | `string \| array` | `'all'` | Toolbar configuration |
+| `placeholder` | `string` | `''` | Placeholder text |
+| `onChange` | `function` | - | Content change callback |
+| `readOnly` | `boolean` | `false` | Read-only mode |
+| `showWordCount` | `boolean` | `false` | Show word/character count |
+| `height` | `string \| number` | `'200px'` | Editor height |
+| `onImageUpload` | `function` | - | Custom image upload |
+
+### Vanilla JS Methods
+
+```javascript
+editor.getHTML()        // Returns HTML string
+editor.getText()        // Returns plain text
+editor.getJSON()        // Returns JSON structure
+editor.setContent(html) // Set editor content
+editor.clear()          // Clear editor
+editor.focus()          // Focus editor
+editor.destroy()        // Cleanup editor
+```
 
 ### Toolbar Items
 
-You can customize the toolbar by providing an array of toolbar items, or use `'all'` to include all available items.
+Available items: `bold`, `italic`, `underline`, `strikethrough`, `code`, `superscript`, `subscript`, `heading-one` through `heading-eight`, `paragraph`, `blockquote`, `code-block`, `bulleted-list`, `numbered-list`, `indent`, `outdent`, `left`, `center`, `right`, `justify`, `text-color`, `bg-color`, `link`, `image`, `table`, `horizontal-rule`, `undo`, `redo`, `find-replace`, `fullscreen`, `view-output`, `separator`
 
-**Using all toolbar items:**
+---
+
+## Examples
+
+### Custom Image Upload
+
+**React:**
 ```tsx
-<Editium toolbar="all" />
+const handleImageUpload = async (file: File) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  
+  const response = await fetch('/api/upload', { 
+    method: 'POST', 
+    body: formData 
+  });
+  
+  const { url } = await response.json();
+  return url;
+};
+
+<Editium onImageUpload={handleImageUpload} />
 ```
 
-**Custom selection of toolbar items:**
+**Vanilla JS:**
+```javascript
+const editor = new Editium({
+  container: document.getElementById('editor'),
+  onImageUpload: async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await fetch('/api/upload', { 
+      method: 'POST', 
+      body: formData 
+    });
+    const { url } = await response.json();
+    return url;
+  }
+});
+```
 
-Available toolbar items:
+### Saving Content
 
-**Text Formatting:**
-- `'bold'` - Bold text
-- `'italic'` - Italic text
-- `'underline'` - Underlined text
-- `'strikethrough'` - Strikethrough text
-- `'superscript'` - Superscript text
-- `'subscript'` - Subscript text
-- `'code'` - Inline code
+**React:**
+```tsx
+function EditorWithSave() {
+  const [content, setContent] = useState({ html: '', json: [] });
 
-**Block Elements:**
-- `'heading-one'` through `'heading-eight'` - Heading levels
-- `'paragraph'` - Paragraph
-- `'bulleted-list'` - Bulleted list
-- `'numbered-list'` - Numbered list
-- `'blockquote'` - Blockquote
-- `'code-block'` - Code block
-- `'horizontal-rule'` - Horizontal rule
+  const handleSave = async () => {
+    await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(content)
+    });
+  };
 
-**Alignment:**
-- `'left'` - Align left
-- `'center'` - Align center
-- `'right'` - Align right
-- `'justify'` - Justify text
+  return (
+    <>
+      <Editium onChange={(html, json) => setContent({ html, json })} />
+      <button onClick={handleSave}>Save</button>
+    </>
+  );
+}
+```
 
-**Advanced:**
-- `'link'` - Insert/edit links
-- `'image'` - Insert images
-- `'table'` - Insert tables
-- `'text-color'` - Text color picker
-- `'bg-color'` - Background color picker
-- `'find-replace'` - Find and replace
-- `'indent'` - Increase indent
-- `'outdent'` - Decrease indent
-- `'undo'` - Undo action
-- `'redo'` - Redo action
-- `'fullscreen'` - Toggle fullscreen mode
-- `'view-output'` - View HTML/JSON output
-- `'separator'` - Visual separator in toolbar
+**Vanilla JS:**
+```javascript
+const editor = new Editium({
+  container: document.getElementById('editor'),
+  onChange: (content) => {
+    localStorage.setItem('content', JSON.stringify({
+      html: content.html,
+      json: content.json
+    }));
+  }
+});
+```
 
-**Importing ALL_TOOLBAR_ITEMS:**
-
-If you need to programmatically access all toolbar items, you can import the constant:
+### Height Configuration
 
 ```tsx
-import { Editium, ALL_TOOLBAR_ITEMS } from 'editium';
+// React
+<Editium height={400} minHeight={200} maxHeight={600} />
 
-// Use all items
-<Editium toolbar="all" />
-
-// Or customize by filtering
-const customToolbar = ALL_TOOLBAR_ITEMS.filter(item => item !== 'separator');
-<Editium toolbar={customToolbar} />
+// Vanilla JS
+new Editium({
+  container: document.getElementById('editor'),
+  height: '400px',
+  minHeight: '200px',
+  maxHeight: '600px'
+});
 ```
+
+---
 
 ## Keyboard Shortcuts
 
-- `Ctrl+B` / `Cmd+B` - Bold
-- `Ctrl+I` / `Cmd+I` - Italic
-- `Ctrl+U` / `Cmd+U` - Underline
-- `Ctrl+D` / `Cmd+D` - Strikethrough
-- `Ctrl+\`` / `Cmd+\`` - Code
-- `Ctrl+Z` / `Cmd+Z` - Undo
-- `Ctrl+Y` / `Cmd+Y` or `Ctrl+Shift+Z` - Redo
-- `F11` - Toggle fullscreen
-- `Escape` - Exit fullscreen
-- `Delete` / `Backspace` - Delete selected images
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl/Cmd + B` | Bold |
+| `Ctrl/Cmd + I` | Italic |
+| `Ctrl/Cmd + U` | Underline |
+| `Ctrl/Cmd + Z` | Undo |
+| `Ctrl/Cmd + Y` | Redo |
+| `Ctrl/Cmd + K` | Insert link |
+| `F11` | Fullscreen |
+| `Tab` | Indent list |
+| `Shift + Tab` | Outdent list |
 
-## Utility Functions
-
-Editium exports several utility functions for advanced use cases:
-
-```typescript
-import {
-  serializeToHtml,
-  toggleMark,
-  toggleBlock,
-  insertLink,
-  insertTable,
-  findAllMatches,
-  replaceMatch,
-  replaceAllMatches,
-} from 'editium';
-```
+---
 
 ## Browser Support
 
-Editium supports all modern browsers:
 - Chrome (latest)
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
 
-## Contributing
+---
 
-Contributions are welcome! If you'd like to contribute to Editium, please follow these steps:
+## Community & Support
+
+**Get Help**
+- [GitHub Issues](https://github.com/NabarupDev/Editify/issues) - Bug reports and feature requests
+- [GitHub Discussions](https://github.com/NabarupDev/Editify/discussions) - Questions and community support
+
+**Contributing**
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'Add new feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-Please ensure your code follows the existing code style and includes appropriate tests.
+**Code of Conduct**
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - See [LICENSE](LICENSE) file for details.
 
-## Links
+Copyright © 2025 [Nabarup Dev](https://github.com/NabarupDev)
 
-- **Live Demo**: [https://editium.vercel.app/](https://editium.vercel.app/)
-- **npm Package**: [https://www.npmjs.com/package/editium](https://www.npmjs.com/package/editium)
-- **GitHub Repository**: [https://github.com/NabarupDev/Editium](https://github.com/NabarupDev/Editium)
-- **Issue Tracker**: [https://github.com/NabarupDev/Editium/issues](https://github.com/NabarupDev/Editium/issues)
+---
 
 ## Acknowledgments
 
-Built with [Slate.js](https://www.slatejs.org/) - a completely customizable framework for building rich text editors.
+- Built with [Slate.js](https://www.slatejs.org/) for the React version
+- Inspired by modern rich text editors: TipTap, ProseMirror, and Quill
 
 ---
 
 <div align="center">
 
-**Developed with ❤️ by [Nabarup](https://github.com/NabarupDev)**
+**Made with ❤️ by [Nabarup Dev](https://github.com/NabarupDev)**
 
-<br />
+⭐ **Star us on [GitHub](https://github.com/NabarupDev/Editify)** if you find this project useful!
 
-⭐ **If you find this project useful, please consider giving it a star on [GitHub](https://github.com/NabarupDev/Editium)!** ⭐
+[NPM](https://www.npmjs.com/package/editium) • [GitHub](https://github.com/NabarupDev/Editify) • [Issues](https://github.com/NabarupDev/Editify/issues)
 
 </div>

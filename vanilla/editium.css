@@ -702,6 +702,11 @@ body.editium-fullscreen-active {
   border-radius: 0 0 4px 4px;
 }
 
+/* When only branding is shown (no stats) */
+.editium-word-count:has(.editium-word-count-branding:only-child) {
+  justify-content: flex-end;
+}
+
 .editium-word-count-stats {
   text-align: left;
   display: flex;
@@ -716,6 +721,13 @@ body.editium-fullscreen-active {
 .editium-word-count-branding .editium-brand {
   color: #4f88f7;
   font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.editium-word-count-branding .editium-brand:hover {
+  color: #3b6fd9;
 }
 
 /* Responsive */

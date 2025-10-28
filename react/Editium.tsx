@@ -8,7 +8,6 @@ import { TableComponent, TableRowComponent, TableCellComponent } from './TableEl
 import { EditiumProps, CustomElement, CustomText, LinkElement, ImageElement, TableElement, TableRowElement, TableCellElement, ALL_TOOLBAR_ITEMS } from './types';
 import { defaultInitialValue, serializeToHtml, toggleMark, unwrapLink, getTextContent, countWords, countCharacters, countCharactersNoSpaces } from './utils';
 
-// Render leaf nodes
 const renderLeaf = ({ attributes, children, leaf }: RenderLeafProps) => {
   const textLeaf = leaf as CustomText;
   
@@ -45,7 +44,6 @@ const renderLeaf = ({ attributes, children, leaf }: RenderLeafProps) => {
     }}>{children}</code>;
   }
 
-  // Apply color and background color
   const style: React.CSSProperties = {};
   if (textLeaf.color) {
     style.color = textLeaf.color;
@@ -54,7 +52,6 @@ const renderLeaf = ({ attributes, children, leaf }: RenderLeafProps) => {
     style.backgroundColor = textLeaf.backgroundColor;
   }
   
-  // Apply search highlighting
   if (textLeaf.searchCurrent) {
     style.backgroundColor = '#ff9800';
     style.color = '#fff';
@@ -65,14 +62,12 @@ const renderLeaf = ({ attributes, children, leaf }: RenderLeafProps) => {
   return <span {...attributes} style={Object.keys(style).length > 0 ? style : undefined}>{children}</span>;
 };
 
-// Parse initial value
 const parseInitialValue = (initialValue?: string | CustomElement[]): CustomElement[] => {
   if (!initialValue) {
     return defaultInitialValue;
   }
 
   if (typeof initialValue === 'string') {
-    // Simple string to editor format conversion
     if (initialValue.trim() === '') {
       return defaultInitialValue;
     }
@@ -87,36 +82,30 @@ const parseInitialValue = (initialValue?: string | CustomElement[]): CustomEleme
   return initialValue.length > 0 ? initialValue : defaultInitialValue;
 };
 
-// Custom editor plugin to normalize tables
 const withTables = (editor: any) => {
   const { normalizeNode } = editor;
 
   editor.normalizeNode = (entry: any) => {
     const [node, path] = entry;
 
-    // If this is a table, ensure it only contains table-row children
     if (SlateElement.isElement(node) && node.type === 'table') {
       for (const [child, childPath] of Array.from(Editor.nodes(editor, { at: path }))) {
         if (childPath.length === path.length + 1 && SlateElement.isElement(child) && child.type !== 'table-row') {
-          // Remove any non-table-row children from table
           Transforms.removeNodes(editor, { at: childPath });
           return;
         }
       }
     }
 
-    // If this is a table-row, ensure it only contains table-cell children
     if (SlateElement.isElement(node) && node.type === 'table-row') {
       for (const [child, childPath] of Array.from(Editor.nodes(editor, { at: path }))) {
         if (childPath.length === path.length + 1 && SlateElement.isElement(child) && child.type !== 'table-cell') {
-          // Remove any non-table-cell children from table-row
           Transforms.removeNodes(editor, { at: childPath });
           return;
         }
       }
     }
 
-    // Fall back to the original `normalizeNode`
     normalizeNode(entry);
   };
 
@@ -140,7 +129,7 @@ const Editium: React.FC<EditiumProps> = ({
   minHeight = '150px',
   maxHeight = '250px',
 }) => {
-  // Parse toolbar configuration - support 'all' keyword
+
   const toolbarItems = toolbar === 'all' ? ALL_TOOLBAR_ITEMS : toolbar;
   const editor = useMemo(() => withTables(withHistory(withReact(createEditor()))), []);
   const [value, setValue] = useState<CustomElement[]>(() => parseInitialValue(initialValue));
@@ -151,17 +140,14 @@ const Editium: React.FC<EditiumProps> = ({
   const [selectedLink, setSelectedLink] = useState<LinkElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
-  // Internal search state (used when not controlled externally)
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [internalSearchMatches, setInternalSearchMatches] = useState<Array<{ path: any; offset: number; text: string }>>([]);
   const [internalCurrentMatchIndex, setInternalCurrentMatchIndex] = useState(0);
   
-  // Use external state if provided, otherwise use internal state
   const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
   const searchMatches = externalSearchMatches !== undefined ? externalSearchMatches : internalSearchMatches;
   const currentMatchIndex = externalCurrentMatchIndex !== undefined ? externalCurrentMatchIndex : internalCurrentMatchIndex;
   
-  // Store props in window for Toolbar access
   useEffect(() => {
     (window as any).__editiumProps = { onImageUpload };
     return () => {
@@ -170,20 +156,16 @@ const Editium: React.FC<EditiumProps> = ({
   }, [onImageUpload]);
   const [selectedLinkPath, setSelectedLinkPath] = useState<any>(null);
 
-  // Handle fullscreen toggle
   const handleFullscreenToggle = useCallback(() => {
     setIsFullscreen(!isFullscreen);
   }, [isFullscreen]);
 
-  // Handle keyboard shortcuts for fullscreen
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // F11 to toggle fullscreen
       if (event.key === 'F11') {
         event.preventDefault();
         setIsFullscreen(!isFullscreen);
       }
-      // ESC to exit fullscreen
       if (event.key === 'Escape' && isFullscreen) {
         event.preventDefault();
         setIsFullscreen(false);
@@ -194,15 +176,11 @@ const Editium: React.FC<EditiumProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen]);
 
-  // Block background scrolling when in fullscreen mode
   useEffect(() => {
     if (isFullscreen) {
-      // Store original overflow value
       const originalOverflow = document.body.style.overflow;
-      // Block scrolling
       document.body.style.overflow = 'hidden';
       
-      // Restore original overflow on cleanup
       return () => {
         document.body.style.overflow = originalOverflow;
       };
@@ -211,11 +189,9 @@ const Editium: React.FC<EditiumProps> = ({
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    // Handle Delete/Backspace for selected images
     if (event.key === 'Delete' || event.key === 'Backspace') {
       const { selection } = editor;
       if (selection) {
-        // Check if an image node is in the current selection
         const [imageNode] = Array.from(
           Editor.nodes(editor, {
             at: selection,
@@ -233,7 +209,6 @@ const Editium: React.FC<EditiumProps> = ({
           return;
         }
         
-        // For Delete key, also check the next node
         if (event.key === 'Delete' && Range.isCollapsed(selection)) {
           try {
             const after = Editor.after(editor, selection);
@@ -303,7 +278,6 @@ const Editium: React.FC<EditiumProps> = ({
     }
   }, [editor]);
 
-  // Handle value changes
   const handleChange = useCallback((newValue: Descendant[]) => {
     setValue(newValue as CustomElement[]);
     
@@ -313,13 +287,11 @@ const Editium: React.FC<EditiumProps> = ({
     }
   }, [onChange]);
 
-  // Calculate word and character counts
   const textContent = useMemo(() => getTextContent(editor.children), [editor.children]);
   const wordCount = useMemo(() => countWords(textContent), [textContent]);
   const charCount = useMemo(() => countCharacters(textContent), [textContent]);
   const charCountNoSpaces = useMemo(() => countCharactersNoSpaces(textContent), [textContent]);
 
-  // Update value when initialValue prop changes
   useEffect(() => {
     if (initialValue !== undefined) {
       const parsedValue = parseInitialValue(initialValue);
@@ -327,7 +299,6 @@ const Editium: React.FC<EditiumProps> = ({
     }
   }, [initialValue]);
 
-  // Handle copy to clipboard
   const handleCopy = useCallback(() => {
     const currentValue = editor.children as CustomElement[];
     const textToCopy = showOutputModal === 'html' 
@@ -340,11 +311,9 @@ const Editium: React.FC<EditiumProps> = ({
     });
   }, [showOutputModal, editor]);
 
-  // Handle link click
   const handleLinkClick = useCallback((event: React.MouseEvent, linkElement: LinkElement) => {
     event.preventDefault();
     
-    // Find the link node in the editor
     const [linkEntry] = Array.from(
       Editor.nodes(editor, {
         match: (n: any) => n.type === 'link' && n.url === linkElement.url,
@@ -365,14 +334,11 @@ const Editium: React.FC<EditiumProps> = ({
     setShowLinkPopup(true);
   }, [editor]);
 
-  // Decorate callback for search highlighting
   const decorate = useCallback(([node, path]: any) => {
     const ranges: any[] = [];
     
     if (searchQuery && searchMatches.length > 0 && Text.isText(node)) {
-      // Find which matches belong to this text node
       searchMatches.forEach((match, index) => {
-        // Check if this match is in the current text node
         if (JSON.stringify(match.path) === JSON.stringify(path)) {
           ranges.push({
             anchor: { path, offset: match.offset },
@@ -387,7 +353,6 @@ const Editium: React.FC<EditiumProps> = ({
     return ranges;
   }, [searchQuery, searchMatches, currentMatchIndex]);
 
-  // Render elements with link click handler
   const renderElementWithHandlers = useCallback((props: RenderElementProps) => {
     const { attributes, children, element } = props;
     const style = { margin: '0', fontWeight: 'normal' };
@@ -501,7 +466,6 @@ const Editium: React.FC<EditiumProps> = ({
     }
   }, [handleLinkClick]);
 
-  // Handle link actions
   const handleOpenLink = useCallback(() => {
     if (selectedLink) {
       window.open(selectedLink.url, selectedLink.target || '_self');
@@ -511,7 +475,6 @@ const Editium: React.FC<EditiumProps> = ({
 
   const handleRemoveLink = useCallback(() => {
     if (selectedLink) {
-      // Find the link node in the current editor state
       const linkEntries = Array.from(
         Editor.nodes(editor, {
           match: (n: any) => 
@@ -526,9 +489,7 @@ const Editium: React.FC<EditiumProps> = ({
         const [linkNode, linkPath] = linkEntries[0];
         const link = linkNode as LinkElement;
         
-        // Check if link is at root level (path length is 1)
         if (linkPath.length === 1) {
-          // Link is at root level - replace it with a paragraph containing the text
           const textChildren = link.children;
           
           Transforms.removeNodes(editor, { at: linkPath });
@@ -540,7 +501,6 @@ const Editium: React.FC<EditiumProps> = ({
             at: linkPath,
           });
         } else {
-          // Link is inside a paragraph - just unwrap it
           Transforms.unwrapNodes(editor, {
             at: linkPath,
           });
@@ -553,10 +513,8 @@ const Editium: React.FC<EditiumProps> = ({
 
   const handleEditLink = useCallback(() => {
     if (selectedLink && selectedLinkPath) {
-      // Get the text content of the link using its path
       const linkText = Editor.string(editor, selectedLinkPath);
       
-      // Call the window handler to trigger edit in toolbar
       if ((window as any).__editiumLinkEditHandler) {
         (window as any).__editiumLinkEditHandler({
           url: selectedLink.url,
@@ -570,7 +528,6 @@ const Editium: React.FC<EditiumProps> = ({
     setShowLinkPopup(false);
   }, [selectedLink, selectedLinkPath, editor]);
 
-  // Format HTML with proper indentation
   const formatHtml = useCallback((html: string): string => {
     let formatted = '';
     let indent = 0;

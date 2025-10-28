@@ -3,12 +3,18 @@
   "version": "1.0.0",
   "description": "Editium - Vanilla JavaScript Rich Text Editor (part of editium package)",
   "private": true,
-  "main": "editium.js",
+  "main": "editium.bundle.js",
   "files": [
     "editium.js",
     "editium.css",
+    "editium.bundle.js",
+    "build-bundle.js",
+    "example/",
     "README.md"
   ],
+  "scripts": {
+    "build": "node build-bundle.js"
+  },
   "keywords": [
     "editor",
     "rich-text",
@@ -19,6 +25,6 @@
     "html-editor",
     "javascript"
   ],
-  "author": "NabarupDev",
+  "author": "Nabarup",
   "license": "MIT"
 }

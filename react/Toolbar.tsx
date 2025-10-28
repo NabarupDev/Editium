@@ -250,7 +250,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const [showLinkContextMenu, setShowLinkContextMenu] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   
-  // Image modal state
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [imageAlt, setImageAlt] = useState('');
@@ -259,17 +258,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const [isReplacingImage, setIsReplacingImage] = useState(false);
   const [replacingImagePath, setReplacingImagePath] = useState<any>(null);
 
-  // Table modal state
   const [showTableModal, setShowTableModal] = useState(false);
   const [tableRows, setTableRows] = useState(3);
   const [tableCols, setTableCols] = useState(3);
 
-  // Find & Replace state
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [replaceText, setReplaceText] = useState('');
   const [totalMatches, setTotalMatches] = useState(0);
   
-  // Use props for search state
   const searchQuery = propSearchQuery;
   const searchMatches = propSearchMatches;
   const currentMatchIndex = propCurrentMatchIndex;
@@ -311,8 +307,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
   const handleLinkToggle = (event: React.MouseEvent) => {
     event.preventDefault();
-    // Always open modal for inserting new link from toolbar
-    // Get selected text if any
     const selection = editor.selection;
     if (selection) {
       const selectedText = Editor.string(editor, selection);
@@ -333,7 +327,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       return;
     }
 
-    // Validate URL format
     try {
       new URL(linkUrl);
     } catch {
@@ -342,7 +335,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     }
 
     if (isEditingLink) {
-      // Update existing link
       Transforms.setNodes(
         editor,
         { 
@@ -355,22 +347,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
         }
       );
       
-      // Update link text if changed and there's a selection
       if (linkText.trim() && editor.selection) {
-        // Delete current text in the link
         Transforms.delete(editor, { at: editor.selection });
-        // Insert new text
         Transforms.insertText(editor, linkText, { at: editor.selection });
       }
     } else {
-      // Insert new link (original logic)
       if (linkText.trim()) {
-        // If user provided text, insert it with the link
         if (editor.selection) {
-          // Delete current selection if any
           Transforms.delete(editor);
         }
-        // Insert link with text
         Transforms.insertNodes(editor, {
           type: 'link',
           url: linkUrl,
@@ -378,13 +363,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
           target: linkTarget,
           children: [{ text: linkText }],
         } as any);
-        // Move cursor after the link
         Transforms.move(editor);
       } else if (editor.selection && !Range.isCollapsed(editor.selection)) {
-        // If no text provided but there's a selection, wrap selection
         insertLink(editor, linkUrl, linkTitle || undefined, linkTarget);
       } else {
-        // No text and no selection - insert URL as text with link
         Transforms.insertNodes(editor, {
           type: 'link',
           url: linkUrl,
@@ -404,7 +386,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     setIsEditingLink(false);
   };
 
-  // Image handlers
   const handleImageToggle = (event: React.MouseEvent) => {
     event.preventDefault();
     setImageUrl('');
@@ -419,9 +400,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const handleInsertImage = async () => {
     setImageUploadError('');
     
-    // Check if file upload is attempted
     if (imageFile) {
-      // Check if onImageUpload is provided
       const editiumProps = (window as any).__editiumProps;
       if (!editiumProps?.onImageUpload) {
         setImageUploadError('Upload not configured. Please define onImageUpload in your app.');
@@ -432,7 +411,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         const uploadedUrl = await editiumProps.onImageUpload(imageFile);
         
         if (isReplacingImage && replacingImagePath) {
-          // Update existing image
           Transforms.setNodes(
             editor,
             { 
@@ -442,7 +420,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
             { at: replacingImagePath }
           );
         } else {
-          // Insert new image
           insertImage(editor, uploadedUrl, imageAlt || imageFile.name);
         }
         
@@ -458,7 +435,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       return;
     }
     
-    // Insert via URL
     if (!imageUrl.trim()) {
       setImageUploadError('Please enter an image URL or select a file');
       return;
@@ -470,7 +446,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     }
 
     if (isReplacingImage && replacingImagePath) {
-      // Update existing image
       Transforms.setNodes(
         editor,
         { 
@@ -480,7 +455,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         { at: replacingImagePath }
       );
     } else {
-      // Insert new image
       insertImage(editor, imageUrl, imageAlt || 'Image');
     }
     
@@ -495,12 +469,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setImageUploadError('Please select an image file');
         return;
       }
-      // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setImageUploadError('Image size should be less than 5MB');
         return;
@@ -510,7 +482,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     }
   };
 
-  // Table handlers
   const handleTableToggle = (event: React.MouseEvent) => {
     event.preventDefault();
     setShowTableModal(true);
@@ -523,7 +494,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     setShowTableModal(false);
   };
 
-  // Find & Replace handlers
   const handleFindReplaceToggle = (event: React.MouseEvent) => {
     event.preventDefault();
     setShowFindReplace(!showFindReplace);
@@ -536,7 +506,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     }
   };
 
-  // Auto-search as user types
   React.useEffect(() => {
     if (!searchQuery || !showFindReplace) {
       onSearchMatchesChange?.([]);
@@ -578,7 +547,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     
     replaceMatch(editor, searchMatches[currentMatchIndex], replaceText);
     
-    // Re-search will happen automatically via useEffect
     const matches = findAllMatches(editor, searchQuery);
     onSearchMatchesChange?.(matches);
   };
@@ -588,7 +556,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     
     replaceAllMatches(editor, searchMatches, replaceText);
     
-    // Clear search after replace all
     onSearchQueryChange?.('');
     setTimeout(() => {
       onSearchQueryChange?.('');
@@ -599,9 +566,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
     }, 50);
   };
 
-  // Effect to listen for external edit requests
   React.useEffect(() => {
-    // This will be called from Editium component when user clicks Edit in popup
     const handleExternalEdit = (linkData: { url: string; title?: string; target?: '_blank' | '_self'; text: string; path?: any }) => {
       setLinkText(linkData.text);
       setLinkUrl(linkData.url);
@@ -610,13 +575,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
       setIsEditingLink(true);
       setShowLinkModal(true);
       
-      // If path is provided, select that node so updates work correctly
       if (linkData.path) {
         editor.selection = Editor.range(editor, linkData.path);
       }
     };
     
-    // Always store reference
     (window as any).__editiumLinkEditHandler = handleExternalEdit;
     
     return () => {
@@ -624,7 +587,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     };
   }, [editor]);
 
-  // Effect to listen for image replacement requests
   React.useEffect(() => {
     const handleImageReplace = (imageData: { url: string; alt?: string; width?: number; height?: number; align?: any; path: any }) => {
       setImageUrl(imageData.url);
@@ -643,7 +605,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
     };
   }, []);
 
-  // Define item groups
   const blockFormattingItems = ['paragraph', 'heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six', 'heading-seven', 'heading-eight'];
   const alignmentItems = ['left', 'center', 'right', 'justify'];
   const formatItems = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'superscript', 'subscript'];
@@ -653,7 +614,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const insertItems = ['link', 'horizontal-rule', 'image', 'table'];
   const editItems = ['undo', 'redo'];
   
-  // Predefined color palette
   const colorPalette = [
     { name: 'Black', value: '#000000' },
     { name: 'Dark Gray', value: '#495057' },
@@ -672,11 +632,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   ];
 
   const renderToolbarItem = (item: ToolbarItem, index: number) => {
-    // Handle separator - skip if it comes right after a grouped item (but not the first one)
     if (item === 'separator') {
       const prevItem = index > 0 ? items[index - 1] : null;
       if (prevItem) {
-        // Check if previous item was part of a group but not the first item
         if (formatItems.includes(prevItem)) {
           const firstFormatIndex = items.findIndex(i => formatItems.includes(i));
           if (firstFormatIndex !== index - 1) return null;
@@ -705,9 +663,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       return <ToolbarSeparator key={`separator-${index}`} />;
     }
     
-    // Group heading items and paragraph into a dropdown
     if (blockFormattingItems.includes(item)) {
-      // Only render the dropdown for the first block formatting item encountered
       const firstBlockIndex = items.findIndex(i => blockFormattingItems.includes(i));
       const currentIndex = items.findIndex(i => i === item);
       
@@ -715,7 +671,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         return null; // Skip rendering individual block formatting buttons
       }
       
-      // Find which block format is currently active
       const activeBlock = blockFormattingItems.find(block => 
         items.includes(block as ToolbarItem) && isBlockActive(editor, block as BlockType)
       );
@@ -769,9 +724,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
       );
     }
 
-    // Group alignment items into a dropdown
     if (alignmentItems.includes(item)) {
-      // Only render the dropdown for the first alignment item encountered
       const firstAlignIndex = items.findIndex(i => alignmentItems.includes(i));
       const currentIndex = items.findIndex(i => i === item);
       
@@ -779,7 +732,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
         return null; // Skip rendering individual alignment buttons
       }
       
-      // Find which alignment is currently active
       const activeAlignment = alignmentItems.find(align => 
         items.includes(align as ToolbarItem) && isAlignmentActive(editor, align as AlignmentType)
       );
@@ -867,7 +819,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       case 'code':
       case 'superscript':
       case 'subscript': {
-        // Group all text formatting into a Format menu
         const formatItems = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'superscript', 'subscript'];
         const firstFormatIndex = items.findIndex(i => formatItems.includes(i));
         const currentIndex = items.findIndex(i => i === item);
@@ -951,7 +902,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       case 'numbered-list':
       case 'indent':
       case 'outdent': {
-        // Group list controls into Lists menu
         const listItems = ['bulleted-list', 'numbered-list', 'indent', 'outdent'];
         const firstListIndex = items.findIndex(i => listItems.includes(i));
         const currentIndex = items.findIndex(i => i === item);
@@ -1006,7 +956,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       
       case 'blockquote':
       case 'code-block': {
-        // Group block elements into Blocks menu
         const firstBlockItemIndex = items.findIndex(i => blockItems.includes(i));
         const currentIndex = items.findIndex(i => i === item);
         
@@ -1042,7 +991,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       
       case 'text-color':
       case 'bg-color': {
-        // Group color controls into Color menu
         const firstColorIndex = items.findIndex(i => colorItems.includes(i));
         const currentIndex = items.findIndex(i => i === item);
         
@@ -1241,7 +1189,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       case 'horizontal-rule':
       case 'image':
       case 'table': {
-        // Group link, horizontal-rule, image, and table into Insert menu
         const firstInsertIndex = items.findIndex(i => insertItems.includes(i));
         const currentIndex = items.findIndex(i => i === item);
         
@@ -1298,7 +1245,6 @@ const Toolbar: React.FC<ToolbarProps> = ({
       
       case 'undo':
       case 'redo': {
-        // Group undo/redo into Edit menu
         const firstEditIndex = items.findIndex(i => editItems.includes(i));
         const currentIndex = items.findIndex(i => i === item);
         

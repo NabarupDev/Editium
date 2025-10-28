@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSlateStatic, useSelected, useFocused, ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
-import { 
-  PlusIcon, 
-  MinusIcon, 
+import {
+  PlusIcon,
+  MinusIcon,
   TrashIcon,
   Bars3BottomLeftIcon,
   Bars3Icon,
@@ -55,7 +55,6 @@ export const TableComponent: React.FC<TableComponentProps> = ({ element, attribu
     setTableAlignment(editor, alignment);
   };
 
-  // Save width to element when it changes
   const updateTableWidth = (width: number) => {
     setTableWidth(width);
     try {
@@ -66,22 +65,21 @@ export const TableComponent: React.FC<TableComponentProps> = ({ element, attribu
         { at: path }
       );
     } catch (error) {
-      // Element might not be in the editor yet
       console.warn('Could not update table width:', error);
     }
   };
 
   return (
     <div
-      style={{ 
+      style={{
         position: 'relative',
         margin: '16px 0',
         display: 'flex',
-        justifyContent: element.align === 'center' ? 'center' : 
-                       element.align === 'right' ? 'flex-end' : 'flex-start',
+        justifyContent: element.align === 'center' ? 'center' :
+          element.align === 'right' ? 'flex-end' : 'flex-start',
       }}
     >
-      <div 
+      <div
         {...attributes}
         style={{ position: 'relative', width: tableWidth ? `${tableWidth}px` : '100%', maxWidth: '100%' }}
         onMouseEnter={() => setShowControls(true)}
@@ -201,7 +199,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({ element, attribu
               Col
             </button>
             <div style={{ width: '1px', height: '24px', backgroundColor: '#e5e7eb', margin: '0 4px' }} />
-            
+
             {/* Alignment buttons */}
             <button
               onClick={() => handleAlign('left')}
@@ -272,7 +270,7 @@ export const TableComponent: React.FC<TableComponentProps> = ({ element, attribu
             >
               <Bars3BottomRightIcon style={{ width: '16px', height: '16px' }} />
             </button>
-            
+
             <div style={{ width: '1px', height: '24px', backgroundColor: '#e5e7eb', margin: '0 4px' }} />
             <button
               onClick={handleDeleteTable}
@@ -323,7 +321,6 @@ export const TableComponent: React.FC<TableComponentProps> = ({ element, attribu
 
               const handleMouseUp = () => {
                 setIsResizing(false);
-                // Save the final width to the element
                 updateTableWidth(finalWidth);
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
@@ -379,7 +376,6 @@ export const TableCellComponent: React.FC<TableCellComponentProps> = ({ element,
   const [showAlignMenu, setShowAlignMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -446,7 +442,7 @@ export const TableCellComponent: React.FC<TableCellComponentProps> = ({ element,
           >
             <Bars3BottomLeftIcon style={{ width: '12px', height: '12px' }} />
           </button>
-          
+
           {showAlignMenu && (
             <div
               style={{

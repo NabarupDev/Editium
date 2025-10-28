@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editium</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="../editium.css">
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Editium</h1>
+    </header>
+
+    <div class="demo-section">
+      <h2>Your Editor</h2>
+      <div id="editor"></div>
+    </div>
+
+    <!-- Installation Section -->
+    <section class="installation-section">
+      <div style="max-width: 800px; margin: 0 auto;">
+        <h2>Getting Started</h2>
+        
+        <p style="color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 30px; font-weight: 400;">
+          Choose your preferred installation method and start building with Editium
+        </p>
+
+        <!-- Installation Method Tabs -->
+        <div class="tab-container">
+          <!-- Tab Headers -->
+          <div class="tab-headers">
+            <button class="tab-btn active" onclick="switchInstallTab(event, 'npm')">NPM</button>
+            <button class="tab-btn" onclick="switchInstallTab(event, 'yarn')">Yarn</button>
+            <button class="tab-btn" onclick="switchInstallTab(event, 'pnpm')">PNPM</button>
+            <button class="tab-btn" onclick="switchInstallTab(event, 'cdn')">CDN</button>
+          </div>
+
+          <!-- Tab Content -->
+          <div class="tab-content">
+            <!-- NPM Tab -->
+            <div id="npm-tab" class="tab-pane active">
+              <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Install via Node Package Manager</p>
+              <div class="code-block">
+                <code>npm install editium</code>
+                <button class="copy-btn" onclick="copyToClipboard('npm install editium', this)">Copy</button>
+              </div>
+            </div>
+
+            <!-- Yarn Tab -->
+            <div id="yarn-tab" class="tab-pane">
+              <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Install via Yarn package manager</p>
+              <div class="code-block">
+                <code>yarn add editium</code>
+                <button class="copy-btn" onclick="copyToClipboard('yarn add editium', this)">Copy</button>
+              </div>
+            </div>
+
+            <!-- PNPM Tab -->
+            <div id="pnpm-tab" class="tab-pane">
+              <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Install via PNPM package manager</p>
+              <div class="code-block">
+                <code>pnpm add editium</code>
+                <button class="copy-btn" onclick="copyToClipboard('pnpm add editium', this)">Copy</button>
+              </div>
+            </div>
+
+            <!-- CDN Tab -->
+            <div id="cdn-tab" class="tab-pane">
+              <!-- CDN Sub-tabs -->
+              <div class="cdn-subtabs">
+                <button class="cdn-subtab-btn active" onclick="switchCdnTab(event, 'bundle')">Bundled (Recommended)</button>
+                <button class="cdn-subtab-btn" onclick="switchCdnTab(event, 'separate')">Separate Files</button>
+              </div>
+
+              <!-- Bundle Tab -->
+              <div id="bundle-tab" class="cdn-tab-pane active">
+                <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Single file includes CSS, icons, and JavaScript</p>
+                <h4 style="font-size: 13px; color: #888; margin-bottom: 8px; font-weight: 500;">unpkg</h4>
+                <div class="code-block">
+                  <code>&lt;script src="https://unpkg.com/editium/vanilla/editium.bundle.js"&gt;&lt;/script&gt;</code>
+                  <button class="copy-btn" onclick="copyToClipboard('<script src=&quot;https://unpkg.com/editium/vanilla/editium.bundle.js&quot;></script>', this)">Copy</button>
+                </div>
+                <h4 style="font-size: 13px; color: #888; margin-bottom: 8px; font-weight: 500; margin-top: 16px;">jsDelivr</h4>
+                <div class="code-block">
+                  <code>&lt;script src="https://cdn.jsdelivr.net/npm/editium/vanilla/editium.bundle.js"&gt;&lt;/script&gt;</code>
+                  <button class="copy-btn" onclick="copyToClipboard('<script src=&quot;https://cdn.jsdelivr.net/npm/editium/vanilla/editium.bundle.js&quot;></script>', this)">Copy</button>
+                </div>
+              </div>
+
+              <!-- Separate Files Tab -->
+              <div id="separate-tab" class="cdn-tab-pane">
+                <p style="color: #666; font-size: 14px; margin-bottom: 16px;">For custom configurations</p>
+                <h4 style="font-size: 13px; color: #888; margin-bottom: 8px; font-weight: 500;">unpkg</h4>
+                <div class="code-block">
+                  <code>&lt;link rel="stylesheet" href="https://unpkg.com/editium/vanilla/editium.css"&gt;</code>
+                  <button class="copy-btn" onclick="copyToClipboard('<link rel=&quot;stylesheet&quot; href=&quot;https://unpkg.com/editium/vanilla/editium.css&quot;>', this)">Copy</button>
+                </div>
+                <div class="code-block">
+                  <code>&lt;script src="https://unpkg.com/editium/vanilla/editium.js"&gt;&lt;/script&gt;</code>
+                  <button class="copy-btn" onclick="copyToClipboard('<script src=&quot;https://unpkg.com/editium/vanilla/editium.js&quot;></script>', this)">Copy</button>
+                </div>
+                <h4 style="font-size: 13px; color: #888; margin-bottom: 8px; font-weight: 500; margin-top: 16px;">jsDelivr</h4>
+                <div class="code-block">
+                  <code>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editium/vanilla/editium.css"&gt;</code>
+                  <button class="copy-btn" onclick="copyToClipboard('<link rel=&quot;stylesheet&quot; href=&quot;https://cdn.jsdelivr.net/npm/editium/vanilla/editium.css&quot;>', this)">Copy</button>
+                </div>
+                <div class="code-block">
+                  <code>&lt;script src="https://cdn.jsdelivr.net/npm/editium/vanilla/editium.js"&gt;&lt;/script&gt;</code>
+                  <button class="copy-btn" onclick="copyToClipboard('<script src=&quot;https://cdn.jsdelivr.net/npm/editium/vanilla/editium.js&quot;></script>', this)">Copy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Usage Section with Tabs -->
+        <div class="tab-container" style="margin-top: 30px;">
+          <!-- Usage Tab Headers -->
+          <div class="usage-tab-headers">
+            <div style="display: flex;">
+              <button class="tab-btn active" onclick="switchUsageTab(event, 'react')">React</button>
+              <button class="tab-btn" onclick="switchUsageTab(event, 'vanilla')">Vanilla JS</button>
+            </div>
+            <button class="copy-btn" id="usage-copy-btn" onclick="copyUsageCode(this)">Copy</button>
+          </div>
+
+          <!-- Usage Tab Content -->
+          <div class="tab-content">
+            <!-- React Usage -->
+            <div id="react-tab" class="usage-pane active">
+              <pre><code>import { Editium } from 'editium';
+
+function App() {
+  return (
+    &lt;Editium
+      initialValue={[]}
+      toolbar="all"
+      placeholder="Start typing..."
+      height="300px"
+      minHeight="200px"
+      maxHeight="400px"
+      showWordCount={true}
+      onChange={(html, json) => {
+        console.log(html, json);
+      }}
+    /&gt;
+  );
+}</code></pre>
+            </div>
+
+            <!-- Vanilla JS Usage -->
+            <div id="vanilla-tab" class="usage-pane">
+              <pre><code>const editor = new Editium({
+  container: document.getElementById('editor'),
+  placeholder: 'Start typing...',
+  toolbar: 'all',
+  height: '300px',
+  minHeight: '200px',
+  maxHeight: '400px',
+  showWordCount: true,
+  onChange: (data) => {
+    console.log(data.html, data.json);
+  }
+});</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="footer-brand">
+          <h3>Editium</h3>
+          <p>A powerful and flexible rich text editor for React and Vanilla JavaScript</p>
+        </div>
+
+        <div class="footer-links">
+          <h4>Resources</h4>
+          <div class="footer-links-list">
+            <a href="https://github.com/NabarupDev/Editium#readme" target="_blank" rel="noopener noreferrer">Documentation</a>
+            <a href="https://github.com/NabarupDev/Editium" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="https://www.npmjs.com/package/editium" target="_blank" rel="noopener noreferrer">NPM Package</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; <span id="year"></span> Editium • MIT License</p>
+        <p>Built with ❤️ by <a href="https://github.com/NabarupDev" target="_blank" rel="noopener noreferrer">Nabarup</a></p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="../editium.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>
