@@ -22,27 +22,27 @@ A lightweight, powerful rich text editor built with pure vanilla JavaScript. Zer
 **Single Bundle** - All-in-one file including JavaScript, CSS, and icons:
 
 ```html
-<script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
+<script src="https://unpkg.com/editium/vanilla/editium.bundle.js"></script>
 ```
 
 **Alternative CDNs:**
 ```html
 <!-- jsDelivr -->
-<script src="https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/editium.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/editium/vanilla/editium.bundle.js"></script>
 ```
 
 **Separate Files** - For more control:
 
 ```html
 <!-- unpkg -->
-<link rel="stylesheet" href="https://unpkg.com/editium@1.0.0/vanilla/editium.css">
+<link rel="stylesheet" href="https://unpkg.com/editium/vanilla/editium.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-<script src="https://unpkg.com/editium@1.0.0/vanilla/editium.js"></script>
+<script src="https://unpkg.com/editium/vanilla/editium.js"></script>
 
 <!-- jsDelivr -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/editium.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editium/vanilla/editium.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/editium.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/editium/vanilla/editium.js"></script>
 ```
 
 ### NPM
@@ -80,7 +80,7 @@ Download the files from the [GitHub repository](https://github.com/NabarupDev/Ed
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editium Editor</title>
-  <script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
+  <script src="https://unpkg.com/editium/vanilla/editium.bundle.js"></script>
 </head>
 <body>
   <div id="editor"></div>
@@ -393,8 +393,8 @@ Custom styling example:
 - **NPM Package**: https://www.npmjs.com/package/editium
 - **GitHub Repository**: https://github.com/NabarupDev/Editium
 - **Issues**: https://github.com/NabarupDev/Editium/issues
-- **unpkg CDN**: https://unpkg.com/editium@1.0.0/vanilla/
-- **jsDelivr CDN**: https://cdn.jsdelivr.net/npm/editium@1.0.0/vanilla/
+- **unpkg CDN**: https://unpkg.com/editium/vanilla/
+- **jsDelivr CDN**: https://cdn.jsdelivr.net/npm/editium/vanilla/
 
 ## License
 

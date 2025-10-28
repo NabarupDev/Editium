@@ -1,9 +1,10 @@
 {
   "name": "editium-example",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "editium": "^1.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "slate": "^0.101.5",

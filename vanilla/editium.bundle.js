@@ -1,6 +1,6 @@
 /**
  * Editium - Vanilla JavaScript Rich Text Editor (Bundled Version)
- * Version: 1.0.0 | License: MIT
+ * Version: 1.0.1 | License: MIT
  * Single file bundle - includes CSS and Font Awesome icons
  */
 

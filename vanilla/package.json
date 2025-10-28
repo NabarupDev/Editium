@@ -1,6 +1,6 @@
 {
   "name": "editium-vanilla",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Editium - Vanilla JavaScript Rich Text Editor (part of editium package)",
   "private": true,
   "main": "editium.bundle.js",

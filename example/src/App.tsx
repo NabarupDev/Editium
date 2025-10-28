@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Editium } from '../../react';
+import { Editium } from 'editium';
 import Installation from './Installation';
 import Footer from './Footer';
 
@@ -46,7 +46,7 @@ const App: React.FC = () => {
           onChange={handleChange}
           onImageUpload={handleImageUpload}
           height="200px"
-          showWordCount={true}
+          showWordCount={false}
         />
       </div>
       

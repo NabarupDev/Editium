@@ -55,7 +55,7 @@ function App() {
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
+  <script src="https://unpkg.com/editium/vanilla/editium.bundle.js"></script>
 </head>
 <body>
   <div id="editor"></div>
@@ -119,7 +119,7 @@ npm install react react-dom
 
 **CDN (Vanilla JS):**
 ```html
-<script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
+<script src="https://unpkg.com/editium/vanilla/editium.bundle.js"></script>
 ```
 
 ---
@@ -179,7 +179,7 @@ function Editor() {
 **CDN (Recommended)**
 
 ```html
-<script src="https://unpkg.com/editium@1.0.0/vanilla/editium.bundle.js"></script>
+<script src="https://unpkg.com/editium/vanilla/editium.bundle.js"></script>
 
 <div id="editor"></div>
 
