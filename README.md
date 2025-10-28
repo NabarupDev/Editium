@@ -47,6 +47,8 @@ function App() {
 }
 ```
 
+**[See live demo →](https://editium.vercel.app/)**
+
 ### Vanilla JavaScript
 
 **Single file - no build step required:**
@@ -71,7 +73,7 @@ function App() {
 </html>
 ```
 
-**[See live demo →](https://editium.vercel.app/)**
+**[See live demo →](https://codepen.io/nabarup-duplicate/pen/WbrKdpj)**
 
 ---
 
