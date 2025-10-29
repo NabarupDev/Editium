@@ -383,6 +383,7 @@ new Editium({
 **Get Help**
 - [GitHub Issues](https://github.com/NabarupDev/Editium/issues) - Bug reports and feature requests
 - [GitHub Discussions](https://github.com/NabarupDev/Editium/discussions) - Questions and community support
+ - Security: See `SECURITY.md` for responsible disclosure and contact instructions
 
 **Contributing**
 
