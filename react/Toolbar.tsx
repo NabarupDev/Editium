@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useSlate } from 'slate-react';
+import { useSlate, ReactEditor } from 'slate-react';
 import { HistoryEditor } from 'slate-history';
 import { Editor, Transforms, Range } from 'slate';
 import {
@@ -57,11 +57,29 @@ interface DropdownProps {
   trigger: React.ReactNode;
   children: React.ReactNode;
   title?: string;
+  editor?: any; // Slate editor instance
 }
 
-const Dropdown: React.FC<DropdownProps> = ({ trigger, children, title }) => {
+// Context for dropdown close function and editor
+const DropdownContext = React.createContext<{ closeDropdown: () => void; editor?: any } | null>(null);
+
+const Dropdown: React.FC<DropdownProps> = ({ trigger, children, title, editor }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useRef(`dropdown-menu-${Math.random().toString(36).substr(2, 9)}`);
+
+  const closeDropdown = () => {
+    setIsOpen(false);
+  };
+
+  // Get all dropdown items
+  const getMenuItems = () => {
+    if (!menuRef.current) return [];
+    return Array.from(menuRef.current.querySelectorAll('[role="menuitem"]')) as HTMLElement[];
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -74,14 +92,94 @@ const Dropdown: React.FC<DropdownProps> = ({ trigger, children, title }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  return (
-    <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
-      <button
-        title={title}
-        onMouseDown={(e) => {
+  // Focus management when dropdown opens
+  useEffect(() => {
+    if (isOpen) {
+      setFocusedIndex(0);
+      const items = getMenuItems();
+      if (items[0]) {
+        items[0].focus();
+      }
+    }
+  }, [isOpen]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const items = getMenuItems();
+    
+    switch (e.key) {
+      case 'Escape':
+        e.preventDefault();
+        setIsOpen(false);
+        buttonRef.current?.focus();
+        break;
+        
+      case 'ArrowDown':
+        e.preventDefault();
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          const nextIndex = (focusedIndex + 1) % items.length;
+          setFocusedIndex(nextIndex);
+          items[nextIndex]?.focus();
+        }
+        break;
+        
+      case 'ArrowUp':
+        e.preventDefault();
+        if (isOpen) {
+          const prevIndex = focusedIndex === 0 ? items.length - 1 : focusedIndex - 1;
+          setFocusedIndex(prevIndex);
+          items[prevIndex]?.focus();
+        }
+        break;
+        
+      case 'Home':
+        if (isOpen) {
           e.preventDefault();
-          setIsOpen(!isOpen);
-        }}
+          setFocusedIndex(0);
+          items[0]?.focus();
+        }
+        break;
+        
+      case 'End':
+        if (isOpen) {
+          e.preventDefault();
+          const lastIndex = items.length - 1;
+          setFocusedIndex(lastIndex);
+          items[lastIndex]?.focus();
+        }
+        break;
+    }
+  };
+
+  const handleButtonClick = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.preventDefault();
+    setIsOpen(!isOpen);
+  };
+
+  const handleButtonKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsOpen(!isOpen);
+    } else {
+      handleKeyDown(e);
+    }
+  };
+
+  return (
+    <div 
+      ref={dropdownRef} 
+      style={{ position: 'relative', display: 'inline-block' }}
+      onKeyDown={handleKeyDown}
+    >
+      <button
+        ref={buttonRef}
+        title={title}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        aria-controls={menuId.current}
+        onMouseDown={handleButtonClick}
+        onKeyDown={handleButtonKeyDown}
         style={{
           backgroundColor: isOpen ? '#dee2e6' : 'transparent',
           border: 'none',
@@ -112,11 +210,18 @@ const Dropdown: React.FC<DropdownProps> = ({ trigger, children, title }) => {
         }}
       >
         {trigger}
-        <ChevronDownIcon style={{ marginLeft: '4px', width: '12px', height: '12px' }} />
+        <ChevronDownIcon 
+          style={{ marginLeft: '4px', width: '12px', height: '12px' }}
+          aria-hidden="true"
+        />
       </button>
       
       {isOpen && (
         <div
+          ref={menuRef}
+          id={menuId.current}
+          role="menu"
+          aria-orientation="vertical"
           style={{
             position: 'absolute',
             top: '100%',
@@ -132,7 +237,9 @@ const Dropdown: React.FC<DropdownProps> = ({ trigger, children, title }) => {
             padding: '4px 0'
           }}
         >
-          {children}
+          <DropdownContext.Provider value={{ closeDropdown, editor }}>
+            {children}
+          </DropdownContext.Provider>
         </div>
       )}
     </div>
@@ -181,38 +288,102 @@ const DropdownItem: React.FC<{
   onMouseDown: (event: React.MouseEvent) => void;
   children: React.ReactNode;
   icon?: React.ReactNode;
-}> = ({ active, onMouseDown, children, icon }) => (
-  <button
-    onMouseDown={onMouseDown}
-    style={{
-      width: '100%',
-      padding: '6px 16px',
-      border: 'none',
-      backgroundColor: active ? '#e7f4ff' : 'transparent',
-      color: '#222f3e',
-      fontSize: '14px',
-      fontWeight: '400',
-      cursor: 'pointer',
-      textAlign: 'left',
-      transition: 'background-color 0.1s ease',
-      borderRadius: '0',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.backgroundColor = '#e7f4ff';
-    }}
-    onMouseLeave={(e) => {
-      if (!active) {
-        e.currentTarget.style.backgroundColor = 'transparent';
+}> = ({ active, onMouseDown, children, icon }) => {
+  const itemRef = useRef<HTMLButtonElement>(null);
+  const dropdownContext = React.useContext(DropdownContext);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      // Convert keyboard event to mouse event for compatibility with existing handlers
+      const mouseEvent = new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+      });
+      e.currentTarget.dispatchEvent(mouseEvent);
+      
+      // Close dropdown and focus editor after activating item
+      if (dropdownContext) {
+        dropdownContext.closeDropdown();
+        // Focus the editor after a short delay to ensure dropdown closes first
+        setTimeout(() => {
+          if (dropdownContext.editor) {
+            try {
+              ReactEditor.focus(dropdownContext.editor);
+            } catch (error) {
+              // Fallback: focus any contenteditable element
+              const editable = document.querySelector('[contenteditable="true"]') as HTMLElement;
+              if (editable) {
+                editable.focus();
+              }
+            }
+          }
+        }, 0);
       }
-    }}
-  >
-    {icon && <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</span>}
-    {children}
-  </button>
-);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    onMouseDown(e);
+    // Close dropdown after mouse click (editor keeps focus naturally with mouse)
+    if (dropdownContext) {
+      dropdownContext.closeDropdown();
+    }
+  };
+
+  return (
+    <button
+      ref={itemRef}
+      role="menuitem"
+      tabIndex={-1}
+      aria-checked={active}
+      onMouseDown={handleMouseDown}
+      onKeyDown={handleKeyDown}
+      style={{
+        width: '100%',
+        padding: '6px 16px',
+        border: 'none',
+        backgroundColor: active ? '#e7f4ff' : 'transparent',
+        color: '#222f3e',
+        fontSize: '14px',
+        fontWeight: '400',
+        cursor: 'pointer',
+        textAlign: 'left',
+        transition: 'background-color 0.1s ease',
+        borderRadius: '0',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = '#e7f4ff';
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.backgroundColor = '#e7f4ff';
+      }}
+      onBlur={(e) => {
+        if (!active) {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }
+      }}
+    >
+      {icon && (
+        <span 
+          style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+      )}
+      {children}
+    </button>
+  );
+};
 
 const ToolbarSeparator: React.FC = () => (
   <div
@@ -710,6 +881,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           key="block-formatting-dropdown"
           trigger={<span>{activeBlock ? getBlockLabel(activeBlock) : 'Paragraph'}</span>}
           title="Block format"
+          editor={editor}
         >
           {items.filter(i => blockFormattingItems.includes(i)).map(block => (
             <DropdownItem
@@ -796,6 +968,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           key="alignment-dropdown"
           trigger={<span>Align</span>}
           title="Text alignment"
+          editor={editor}
         >
           {items.filter(i => alignmentItems.includes(i)).map(align => (
             <DropdownItem
@@ -830,6 +1003,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             key="format-menu"
             trigger={<span>Format</span>}
             title="Format"
+            editor={editor}
           >
             {items.includes('bold') && (
               <DropdownItem
@@ -913,6 +1087,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             key="lists-menu"
             trigger={<span>Lists</span>}
             title="Lists"
+            editor={editor}
           >
             {items.includes('bulleted-list') && (
               <DropdownItem
@@ -966,6 +1141,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             key="blocks-menu"
             trigger={<span>Blocks</span>}
             title="Blocks"
+            editor={editor}
           >
             {items.includes('blockquote') && (
               <DropdownItem
@@ -1004,6 +1180,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             key="color-menu"
             trigger={<span>Color</span>}
             title="Color"
+            editor={editor}
           >
             {items.includes('text-color') && (
               <div style={{ padding: '8px 12px' }}>
@@ -1199,6 +1376,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             key="insert-menu"
             trigger={<span>Insert</span>}
             title="Insert"
+            editor={editor}
           >
             {items.includes('link') && (
               <DropdownItem
@@ -1255,6 +1433,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             key="edit-menu"
             trigger={<span>Edit</span>}
             title="Edit"
+            editor={editor}
           >
             {items.includes('undo') && (
               <DropdownItem
@@ -1283,6 +1462,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             key={item}
             trigger={<span>View</span>}
             title="View Output"
+            editor={editor}
           >
             <DropdownItem
               active={false}

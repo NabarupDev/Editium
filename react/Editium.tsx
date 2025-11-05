@@ -357,8 +357,9 @@ const Editium: React.FC<EditiumProps> = ({
     const { attributes, children, element } = props;
     const style = { margin: '0', fontWeight: 'normal' };
     const alignStyle = (element as CustomElement).align ? { 
-      textAlign: (element as CustomElement).align as 'left' | 'center' | 'right' | 'justify' 
-    } : {};
+      textAlign: (element as CustomElement).align as 'left' | 'center' | 'right' | 'justify',
+      width: '100%'
+    } : { width: '100%' };
     const combinedStyle = { ...style, ...alignStyle };
     
     switch ((element as CustomElement | LinkElement).type) {
@@ -568,6 +569,9 @@ const Editium: React.FC<EditiumProps> = ({
     backgroundColor: '#fff',
     position: 'relative',
     overflow: 'auto',
+    width: '100%',
+    maxWidth: '100%',
+    boxSizing: 'border-box',
     ...style,
   };
 
@@ -604,6 +608,10 @@ const Editium: React.FC<EditiumProps> = ({
             position: relative;
             min-height: inherit;
             height: 100%;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            box-sizing: border-box;
           }
           
           /* Custom scrollbar styling for better UX */
@@ -630,12 +638,15 @@ const Editium: React.FC<EditiumProps> = ({
             opacity: 0.333;
             pointer-events: none;
             user-select: none;
-            display: inline-block !important;
+            display: block !important;
             width: 100%;
             max-width: 100%;
-            white-space: nowrap;
+            white-space: pre-wrap;
             margin: 0 !important;
             vertical-align: text-top;
+            position: absolute;
+            top: 0;
+            left: 0;
           }
           
           [data-slate-editor] p,
@@ -646,6 +657,8 @@ const Editium: React.FC<EditiumProps> = ({
           [data-slate-editor] h5,
           [data-slate-editor] h6 {
             position: relative;
+            width: 100%;
+            box-sizing: border-box;
           }
           
           [data-slate-editor] [contenteditable="true"] {

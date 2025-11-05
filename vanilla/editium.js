@@ -180,34 +180,58 @@ class Editium {
     const dropdown = document.createElement('div');
     dropdown.className = 'editium-dropdown';
     
+    const menuId = `editium-menu-${Math.random().toString(36).substr(2, 9)}`;
+    
     const trigger = document.createElement('button');
     trigger.className = 'editium-toolbar-button editium-dropdown-trigger';
     trigger.type = 'button';
     trigger.textContent = label;
     trigger.title = label;
     
+    // ARIA attributes for accessibility
+    trigger.setAttribute('aria-haspopup', 'menu');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', menuId);
+    
     const menu = document.createElement('div');
     menu.className = 'editium-dropdown-menu';
+    menu.id = menuId;
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-orientation', 'vertical');
+    menu.setAttribute('aria-hidden', 'true');
     
-    items.forEach(itemType => {
+    items.forEach((itemType, index) => {
       const config = this.getButtonConfig(itemType);
       if (!config) return;
       
       const item = document.createElement('button');
       item.type = 'button';
       item.innerHTML = `${config.icon} <span>${config.title}</span>`;
+      item.setAttribute('role', 'menuitem');
+      item.setAttribute('tabindex', index === 0 ? '0' : '-1');
+      
       item.onclick = (e) => {
         e.preventDefault();
         config.action();
         this.closeDropdown();
+        this.focusEditor();
       };
+      
       menu.appendChild(item);
     });
     
+    // Add keyboard navigation to trigger
     trigger.onclick = (e) => {
       e.preventDefault();
-      this.toggleDropdown(menu);
+      this.toggleDropdown(menu, trigger);
     };
+    
+    trigger.onkeydown = (e) => {
+      this.handleDropdownTriggerKeyDown(e, menu, trigger);
+    };
+    
+    // Add keyboard navigation to menu
+    this.addMenuKeyboardNavigation(menu, trigger);
     
     dropdown.appendChild(trigger);
     dropdown.appendChild(menu);
@@ -219,14 +243,25 @@ class Editium {
     const dropdown = document.createElement('div');
     dropdown.className = 'editium-dropdown';
     
+    const menuId = `editium-menu-${Math.random().toString(36).substr(2, 9)}`;
+    
     const trigger = document.createElement('button');
     trigger.className = 'editium-toolbar-button editium-dropdown-trigger';
     trigger.type = 'button';
     trigger.textContent = 'Paragraph';
     trigger.title = 'Block Format';
     
+    // ARIA attributes for accessibility
+    trigger.setAttribute('aria-haspopup', 'menu');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', menuId);
+    
     const menu = document.createElement('div');
     menu.className = 'editium-dropdown-menu';
+    menu.id = menuId;
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-orientation', 'vertical');
+    menu.setAttribute('aria-hidden', 'true');
     
     const formats = [
       { label: 'Paragraph', value: 'p' },
@@ -238,23 +273,35 @@ class Editium {
       { label: 'Heading 6', value: 'h6' },
     ];
     
-    formats.forEach(format => {
+    formats.forEach((format, index) => {
       const item = document.createElement('button');
       item.type = 'button';
       item.textContent = format.label;
+      item.setAttribute('role', 'menuitem');
+      item.setAttribute('tabindex', index === 0 ? '0' : '-1');
+      
       item.onclick = (e) => {
         e.preventDefault();
         this.execCommand('formatBlock', `<${format.value}>`);
         trigger.textContent = format.label;
         this.closeDropdown();
+        this.focusEditor();
       };
+      
       menu.appendChild(item);
     });
     
     trigger.onclick = (e) => {
       e.preventDefault();
-      this.toggleDropdown(menu);
+      this.toggleDropdown(menu, trigger);
     };
+    
+    trigger.onkeydown = (e) => {
+      this.handleDropdownTriggerKeyDown(e, menu, trigger);
+    };
+    
+    // Add keyboard navigation to menu
+    this.addMenuKeyboardNavigation(menu, trigger);
     
     dropdown.appendChild(trigger);
     dropdown.appendChild(menu);
@@ -266,14 +313,25 @@ class Editium {
     const dropdown = document.createElement('div');
     dropdown.className = 'editium-dropdown';
     
+    const menuId = `editium-menu-${Math.random().toString(36).substr(2, 9)}`;
+    
     const trigger = document.createElement('button');
     trigger.className = 'editium-toolbar-button editium-dropdown-trigger';
     trigger.type = 'button';
     trigger.textContent = 'Align';
     trigger.title = 'Text Alignment';
     
+    // ARIA attributes for accessibility
+    trigger.setAttribute('aria-haspopup', 'menu');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', menuId);
+    
     const menu = document.createElement('div');
     menu.className = 'editium-dropdown-menu';
+    menu.id = menuId;
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-orientation', 'vertical');
+    menu.setAttribute('aria-hidden', 'true');
     
     const alignments = [
       { label: 'Align Left', icon: '<i class="fa-solid fa-align-left"></i>', command: 'justifyLeft' },
@@ -282,22 +340,34 @@ class Editium {
       { label: 'Justify', icon: '<i class="fa-solid fa-align-justify"></i>', command: 'justifyFull' },
     ];
     
-    alignments.forEach(align => {
+    alignments.forEach((align, index) => {
       const item = document.createElement('button');
       item.type = 'button';
       item.innerHTML = `${align.icon} <span>${align.label}</span>`;
+      item.setAttribute('role', 'menuitem');
+      item.setAttribute('tabindex', index === 0 ? '0' : '-1');
+      
       item.onclick = (e) => {
         e.preventDefault();
         this.execCommand(align.command);
         this.closeDropdown();
+        this.focusEditor();
       };
+      
       menu.appendChild(item);
     });
     
     trigger.onclick = (e) => {
       e.preventDefault();
-      this.toggleDropdown(menu);
+      this.toggleDropdown(menu, trigger);
     };
+    
+    trigger.onkeydown = (e) => {
+      this.handleDropdownTriggerKeyDown(e, menu, trigger);
+    };
+    
+    // Add keyboard navigation to menu
+    this.addMenuKeyboardNavigation(menu, trigger);
     
     dropdown.appendChild(trigger);
     dropdown.appendChild(menu);
@@ -305,21 +375,135 @@ class Editium {
     return dropdown;
   }
   
-  toggleDropdown(menu) {
+  toggleDropdown(menu, trigger) {
     if (this.openDropdown === menu) {
       this.closeDropdown();
     } else {
       this.closeDropdown();
       menu.classList.add('show');
       this.openDropdown = menu;
+      this.currentDropdownTrigger = trigger;
+      
+      // Update ARIA attributes
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+      menu.setAttribute('aria-hidden', 'false');
+      
+      // Focus first menu item
+      const firstItem = menu.querySelector('[role="menuitem"]');
+      if (firstItem) {
+        setTimeout(() => firstItem.focus(), 0);
+      }
     }
   }
   
   closeDropdown() {
     if (this.openDropdown) {
       this.openDropdown.classList.remove('show');
+      
+      // Update ARIA attributes
+      if (this.currentDropdownTrigger) {
+        this.currentDropdownTrigger.setAttribute('aria-expanded', 'false');
+      }
+      this.openDropdown.setAttribute('aria-hidden', 'true');
+      
       this.openDropdown = null;
+      this.currentDropdownTrigger = null;
     }
+  }
+  
+  // New method to handle keyboard navigation on dropdown triggers
+  handleDropdownTriggerKeyDown(event, menu, trigger) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.toggleDropdown(menu, trigger);
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.toggleDropdown(menu, trigger);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeDropdown();
+      trigger.focus();
+    }
+  }
+  
+  // New method to add keyboard navigation to menu items
+  addMenuKeyboardNavigation(menu, trigger) {
+    menu.addEventListener('keydown', (e) => {
+      const items = Array.from(menu.querySelectorAll('[role="menuitem"]'));
+      const currentIndex = items.indexOf(document.activeElement);
+      
+      switch(e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          if (currentIndex < items.length - 1) {
+            items[currentIndex + 1].focus();
+            this.updateMenuItemTabIndex(items, currentIndex + 1);
+          }
+          break;
+          
+        case 'ArrowUp':
+          e.preventDefault();
+          if (currentIndex > 0) {
+            items[currentIndex - 1].focus();
+            this.updateMenuItemTabIndex(items, currentIndex - 1);
+          }
+          break;
+          
+        case 'Home':
+          e.preventDefault();
+          items[0].focus();
+          this.updateMenuItemTabIndex(items, 0);
+          break;
+          
+        case 'End':
+          e.preventDefault();
+          items[items.length - 1].focus();
+          this.updateMenuItemTabIndex(items, items.length - 1);
+          break;
+          
+        case 'Escape':
+          e.preventDefault();
+          this.closeDropdown();
+          if (trigger) {
+            trigger.focus();
+          }
+          break;
+          
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          if (document.activeElement && document.activeElement.hasAttribute('role')) {
+            document.activeElement.click();
+          }
+          break;
+          
+        case 'Tab':
+          e.preventDefault();
+          this.closeDropdown();
+          if (trigger) {
+            trigger.focus();
+          }
+          break;
+      }
+    });
+  }
+  
+  // Update tabindex for roving tabindex pattern
+  updateMenuItemTabIndex(items, focusedIndex) {
+    items.forEach((item, index) => {
+      item.setAttribute('tabindex', index === focusedIndex ? '0' : '-1');
+    });
+  }
+  
+  // New method to focus the editor
+  focusEditor() {
+    setTimeout(() => {
+      if (this.editor) {
+        this.editor.focus();
+      }
+    }, 0);
   }
   
   createToolbarButton(type) {
@@ -350,31 +534,54 @@ class Editium {
     const dropdown = document.createElement('div');
     dropdown.className = 'editium-dropdown';
     
+    const menuId = `editium-menu-${Math.random().toString(36).substr(2, 9)}`;
+    
     const trigger = document.createElement('button');
     trigger.className = 'editium-toolbar-button editium-dropdown-trigger';
     trigger.type = 'button';
     trigger.innerHTML = config.icon;
     trigger.title = config.title;
     
+    // ARIA attributes for accessibility
+    trigger.setAttribute('aria-haspopup', 'menu');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', menuId);
+    
     const menu = document.createElement('div');
     menu.className = 'editium-dropdown-menu';
+    menu.id = menuId;
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-orientation', 'vertical');
+    menu.setAttribute('aria-hidden', 'true');
     
-    config.dropdown.forEach(item => {
+    config.dropdown.forEach((item, index) => {
       const menuItem = document.createElement('button');
       menuItem.type = 'button';
       menuItem.textContent = item.label;
+      menuItem.setAttribute('role', 'menuitem');
+      menuItem.setAttribute('tabindex', index === 0 ? '0' : '-1');
+      
       menuItem.onclick = (e) => {
         e.preventDefault();
         item.action();
         this.closeDropdown();
+        this.focusEditor();
       };
+      
       menu.appendChild(menuItem);
     });
     
     trigger.onclick = (e) => {
       e.preventDefault();
-      this.toggleDropdown(menu);
+      this.toggleDropdown(menu, trigger);
     };
+    
+    trigger.onkeydown = (e) => {
+      this.handleDropdownTriggerKeyDown(e, menu, trigger);
+    };
+    
+    // Add keyboard navigation to menu
+    this.addMenuKeyboardNavigation(menu, trigger);
     
     dropdown.appendChild(trigger);
     dropdown.appendChild(menu);
