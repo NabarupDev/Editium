@@ -38,3 +38,8 @@ export {
   replaceMatch,
   replaceAllMatches,
 } from './utils';
+export {
+  importFromDocx,
+  exportToDocx,
+  exportToPdf,
+} from './docxUtils';

@@ -26,7 +26,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ArrowsPointingOutIcon,
-  ArrowsPointingInIcon
+  ArrowsPointingInIcon,
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  DocumentArrowDownIcon,
+  DocumentArrowUpIcon
 } from '@heroicons/react/24/outline';
 import { isMarkActive, isBlockActive, toggleMark, toggleBlock, isLinkActive, insertLink, unwrapLink, isAlignmentActive, toggleAlignment, indentListItem, outdentListItem, getLinkAtCursor, insertHorizontalRule, applyColor, applyBackgroundColor, getActiveColor, getActiveBackgroundColor, insertImage, isValidImageUrl, insertTable, addTableRow, removeTableRow, addTableColumn, removeTableColumn, isInTable, findAllMatches, navigateToMatch, replaceMatch, replaceAllMatches } from './utils';
 import { FormatType, BlockType, ToolbarItem, AlignmentType, LinkElement, ImageElement } from './types';
@@ -44,6 +48,11 @@ interface ToolbarProps {
   onCurrentMatchIndexChange?: (index: number) => void;
   isFullscreen?: boolean;
   onFullscreenToggle?: () => void;
+  onImportDocx?: (file: File) => void;
+  onExportDocx?: () => void;
+  onExportPdf?: () => void;
+  importStatus?: { type: 'success' | 'error' | 'info'; message: string } | null;
+  onClearImportStatus?: () => void;
 }
 
 interface ToolbarButtonProps {
@@ -410,6 +419,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onCurrentMatchIndexChange,
   isFullscreen = false,
   onFullscreenToggle,
+  onImportDocx,
+  onExportDocx,
+  onExportPdf,
+  importStatus,
+  onClearImportStatus,
 }) => {
   const editor = useSlate();
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -436,6 +450,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [replaceText, setReplaceText] = useState('');
   const [totalMatches, setTotalMatches] = useState(0);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const searchQuery = propSearchQuery;
   const searchMatches = propSearchMatches;
@@ -675,6 +691,32 @@ const Toolbar: React.FC<ToolbarProps> = ({
       onSearchMatchesChange?.([]);
       setTotalMatches(0);
     }
+  };
+
+  const handleImportDocx = (event: React.MouseEvent) => {
+    event.preventDefault();
+    fileInputRef.current?.click();
+  };
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.name.endsWith('.docx')) {
+      onImportDocx?.(file);
+    }
+    // Reset input so the same file can be selected again
+    if (event.target) {
+      event.target.value = '';
+    }
+  };
+
+  const handleExportDocx = (event: React.MouseEvent) => {
+    event.preventDefault();
+    onExportDocx?.();
+  };
+
+  const handleExportPdf = (event: React.MouseEvent) => {
+    event.preventDefault();
+    onExportPdf?.();
   };
 
   React.useEffect(() => {
@@ -1513,6 +1555,39 @@ const Toolbar: React.FC<ToolbarProps> = ({
             <MagnifyingGlassIcon style={{ width: '18px', height: '18px' }} />
           </ToolbarButton>
         );
+      case 'import-docx':
+        return (
+          <ToolbarButton
+            key={item}
+            active={false}
+            onMouseDown={handleImportDocx}
+            title="Import from Word (.docx)"
+          >
+            <DocumentArrowUpIcon style={{ width: '18px', height: '18px' }} />
+          </ToolbarButton>
+        );
+      case 'export-docx':
+        return (
+          <ToolbarButton
+            key={item}
+            active={false}
+            onMouseDown={handleExportDocx}
+            title="Export to Word (.docx)"
+          >
+            <DocumentArrowDownIcon style={{ width: '18px', height: '18px' }} />
+          </ToolbarButton>
+        );
+      case 'export-pdf':
+        return (
+          <ToolbarButton
+            key={item}
+            active={false}
+            onMouseDown={handleExportPdf}
+            title="Export to PDF"
+          >
+            <ArrowDownTrayIcon style={{ width: '18px', height: '18px' }} />
+          </ToolbarButton>
+        );
       case 'fullscreen':
         return (
           <ToolbarButton
@@ -2077,10 +2152,52 @@ const Toolbar: React.FC<ToolbarProps> = ({
           {items.filter(item => item !== 'fullscreen' && item !== 'find-replace').map((item, index) => renderToolbarItem(item, index))}
         </div>
         
-        {/* Right side: Find-replace and Fullscreen buttons */}
-        <div style={{ display: 'flex', gap: '2px', marginLeft: '8px' }}>
-          {items.includes('find-replace') && renderToolbarItem('find-replace', items.length - 1)}
-          {items.includes('fullscreen') && renderToolbarItem('fullscreen', items.length)}
+        {/* Right side: Import status, Find-replace and Fullscreen buttons */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginLeft: '8px' }}>
+          {/** Import status pill (dismissible) */}
+          {typeof onClearImportStatus === 'function' && typeof importStatus !== 'undefined' && importStatus && (
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 10px',
+                borderRadius: '16px',
+                fontSize: '13px',
+                color: importStatus.type === 'error' ? '#7f1d1d' : importStatus.type === 'success' ? '#064e3b' : '#0c4a6e',
+                backgroundColor: importStatus.type === 'error' ? '#fef2f2' : importStatus.type === 'success' ? '#ecfccb' : '#e6f2ff',
+                border: importStatus.type === 'error' ? '1px solid #fecaca' : importStatus.type === 'success' ? '1px solid #bbf7d0' : '1px solid #bae6fd',
+                maxWidth: '360px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+              <span style={{ display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis' }}>{importStatus.message}</span>
+              <button
+                onClick={(e) => { e.preventDefault(); onClearImportStatus?.(); }}
+                title="Dismiss"
+                aria-label="Dismiss import status"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '2px 6px',
+                  color: 'inherit',
+                  fontSize: '14px',
+                }}
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '2px' }}>
+            {items.includes('find-replace') && renderToolbarItem('find-replace', items.length - 1)}
+            {items.includes('fullscreen') && renderToolbarItem('fullscreen', items.length)}
+          </div>
         </div>
       </div>
 
@@ -2341,6 +2458,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
           </button>
         </div>
       )}
+      
+      {/* Hidden file input for .docx import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        style={{ display: 'none' }}
+        onChange={handleFileInputChange}
+      />
     </>
   );
 };

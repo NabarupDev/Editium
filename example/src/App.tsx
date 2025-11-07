@@ -45,8 +45,9 @@ const App: React.FC = () => {
           placeholder="Experience the full power of rich text editing..."
           onChange={handleChange}
           onImageUpload={handleImageUpload}
-          height="200px"
+          height="300px"
           showWordCount={true}
+          showDocxImportExport={true}
         />
       </div>
       

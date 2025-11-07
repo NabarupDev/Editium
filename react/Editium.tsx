@@ -7,6 +7,7 @@ import ResizableImage from './ResizableImage';
 import { TableComponent, TableRowComponent, TableCellComponent } from './TableElement';
 import { EditiumProps, CustomElement, CustomText, LinkElement, ImageElement, TableElement, TableRowElement, TableCellElement, ALL_TOOLBAR_ITEMS } from './types';
 import { defaultInitialValue, serializeToHtml, toggleMark, unwrapLink, getTextContent, countWords, countCharacters, countCharactersNoSpaces } from './utils';
+import { importFromDocx, exportToDocx, exportToPdf } from './docxUtils';
 
 const renderLeaf = ({ attributes, children, leaf }: RenderLeafProps) => {
   const textLeaf = leaf as CustomText;
@@ -125,16 +126,27 @@ const Editium: React.FC<EditiumProps> = ({
   searchMatches: externalSearchMatches,
   currentMatchIndex: externalCurrentMatchIndex,
   showWordCount = true,
+  showDocxImportExport = false,
   height = '200px',
   minHeight = '150px',
   maxHeight = '250px',
 }) => {
 
-  const toolbarItems = toolbar === 'all' ? ALL_TOOLBAR_ITEMS : toolbar;
+  // Filter toolbar items based on showDocxImportExport
+  const toolbarItems = useMemo(() => {
+    const items = toolbar === 'all' ? ALL_TOOLBAR_ITEMS : toolbar;
+    if (!showDocxImportExport) {
+      return items.filter(item => item !== 'import-docx' && item !== 'export-docx' && item !== 'export-pdf');
+    }
+    return items;
+  }, [toolbar, showDocxImportExport]);
+  
   const editor = useMemo(() => withTables(withHistory(withReact(createEditor()))), []);
   const [value, setValue] = useState<CustomElement[]>(() => parseInitialValue(initialValue));
+  const [editorKey, setEditorKey] = useState(0); // Key to force re-render
   const [showOutputModal, setShowOutputModal] = useState<'html' | 'json' | 'preview' | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [showLinkPopup, setShowLinkPopup] = useState(false);
   const [linkPopupPosition, setLinkPopupPosition] = useState({ x: 0, y: 0 });
   const [selectedLink, setSelectedLink] = useState<LinkElement | null>(null);
@@ -159,6 +171,76 @@ const Editium: React.FC<EditiumProps> = ({
   const handleFullscreenToggle = useCallback(() => {
     setIsFullscreen(!isFullscreen);
   }, [isFullscreen]);
+
+  const handleImportDocx = useCallback(async (file: File) => {
+    try {
+      const nodes = await importFromDocx(file);
+      
+      // Append imported content to existing content instead of replacing
+      const currentContent = [...editor.children] as CustomElement[];
+      const newContent = [...currentContent, ...nodes];
+      
+      // Update the editor's children
+      editor.children = newContent;
+      
+      // Normalize the editor to ensure it's in a valid state
+      Editor.normalize(editor, { force: true });
+      
+      // Update the state
+      setValue(newContent);
+      
+      // Force re-render by changing key
+      setEditorKey(prev => prev + 1);
+      
+      if (onChange) {
+        onChange(serializeToHtml(newContent), newContent);
+      }
+      
+      // compute word count from imported nodes and show success status
+      try {
+        if (showWordCount) {
+          const textContent = getTextContent(nodes as any);
+          const words = countWords(textContent || '');
+          setImportStatus({ type: 'success', message: `Imported ${file.name}` });
+        } else {
+          setImportStatus({ type: 'success', message: `Imported ${file.name}` });
+        }
+      } catch (e) {
+        setImportStatus({ type: 'success', message: `Imported ${file.name}` });
+      }
+    } catch (error) {
+      console.error('Error importing .docx file:', error);
+      const errMsg = (error as Error)?.message || 'Invalid file';
+      setImportStatus({ type: 'error', message: `Failed to import ${file.name}: ${errMsg}` });
+      // keep existing fallback alert for visibility
+      alert('Failed to import .docx file. Please ensure it is a valid Word document.');
+    }
+  }, [onChange, editor, showWordCount]);
+
+  // auto-clear import status after a short timeout
+  useEffect(() => {
+    if (!importStatus) return;
+    const t = setTimeout(() => setImportStatus(null), 4000);
+    return () => clearTimeout(t);
+  }, [importStatus]);
+
+  const handleExportDocx = useCallback(async () => {
+    try {
+      await exportToDocx(value, 'document.docx');
+    } catch (error) {
+      console.error('Error exporting to .docx:', error);
+      alert('Failed to export to .docx file.');
+    }
+  }, [value]);
+
+  const handleExportPdf = useCallback(async () => {
+    try {
+      await exportToPdf(value, 'document.pdf');
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      alert('Failed to export to PDF file.');
+    }
+  }, [value]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -811,7 +893,7 @@ const Editium: React.FC<EditiumProps> = ({
           </div>
         </div>
       )}
-      <Slate editor={editor} initialValue={value} onValueChange={handleChange}>
+      <Slate key={editorKey} editor={editor} initialValue={value} onValueChange={handleChange}>
         {toolbarItems.length > 0 && (
           <Toolbar 
             items={toolbarItems} 
@@ -825,6 +907,11 @@ const Editium: React.FC<EditiumProps> = ({
             onCurrentMatchIndexChange={setInternalCurrentMatchIndex}
             isFullscreen={isFullscreen}
             onFullscreenToggle={handleFullscreenToggle}
+            onImportDocx={showDocxImportExport ? handleImportDocx : undefined}
+            onExportDocx={showDocxImportExport ? handleExportDocx : undefined}
+            onExportPdf={showDocxImportExport ? handleExportPdf : undefined}
+            importStatus={showDocxImportExport ? importStatus : null}
+            onClearImportStatus={() => setImportStatus(null)}
           />
         )}
         <Editable

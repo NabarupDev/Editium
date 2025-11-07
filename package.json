@@ -65,6 +65,10 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "docx": "^9.5.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
+    "mammoth": "^1.11.0",
     "slate": "^0.103.0",
     "slate-history": "^0.100.0",
     "slate-react": "^0.108.0"

@@ -3,7 +3,7 @@ import { BaseElement, BaseText } from 'slate';
 export type FormatType = 'bold' | 'italic' | 'underline' | 'code' | 'strikethrough' | 'superscript' | 'subscript';
 export type AlignmentType = 'left' | 'center' | 'right' | 'justify';
 export type BlockType = 'paragraph' | 'heading-one' | 'heading-two' | 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'heading-seven' | 'heading-eight' | 'bulleted-list' | 'numbered-list' | 'list-item' | 'blockquote' | 'code-block' | 'horizontal-rule' | 'image' | 'table' | 'table-row' | 'table-cell';
-export type ToolbarItem = FormatType | BlockType | AlignmentType | 'link' | 'indent' | 'outdent' | 'undo' | 'redo' | 'separator' | 'view-output' | 'text-color' | 'bg-color' | 'table' | 'find-replace' | 'fullscreen';
+export type ToolbarItem = FormatType | BlockType | AlignmentType | 'link' | 'indent' | 'outdent' | 'undo' | 'redo' | 'separator' | 'view-output' | 'text-color' | 'bg-color' | 'table' | 'find-replace' | 'fullscreen' | 'import-docx' | 'export-docx' | 'export-pdf';
 
 // All available toolbar items in a logical grouped order
 export const ALL_TOOLBAR_ITEMS: ToolbarItem[] = [
@@ -23,6 +23,8 @@ export const ALL_TOOLBAR_ITEMS: ToolbarItem[] = [
   'bulleted-list', 'numbered-list', 'indent', 'outdent',
   'separator',
   'link', 'image', 'table', 'horizontal-rule', 'undo', 'redo',
+  'separator',
+  'import-docx', 'export-docx', 'export-pdf',
   'separator',
   'find-replace', 'fullscreen', 'view-output'
 ];
@@ -121,6 +123,9 @@ export interface EditiumProps {
   
   /** Whether to show word count. Default: true */
   showWordCount?: boolean;
+  
+  /** Whether to show .docx import/export buttons. Default: false */
+  showDocxImportExport?: boolean;
   
   /** Editor height. Default: '200px' */
   height?: string | number;
