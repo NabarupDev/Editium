@@ -770,3 +770,25 @@ body.editium-fullscreen-active {
     padding: 0;
   }
 }
+/* Emoji Picker Styles */
+.editium-emoji-picker-container {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+}
+
+.editium-emoji-picker-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.editium-emoji-picker-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.editium-emoji-picker-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.editium-emoji-picker-container::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}

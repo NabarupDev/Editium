@@ -26,6 +26,14 @@ interface ToolbarProps {
     onCurrentMatchIndexChange?: (index: number) => void;
     isFullscreen?: boolean;
     onFullscreenToggle?: () => void;
+    onImportDocx?: (file: File) => void;
+    onExportDocx?: () => void;
+    onExportPdf?: () => void;
+    importStatus?: {
+        type: 'success' | 'error' | 'info';
+        message: string;
+    } | null;
+    onClearImportStatus?: () => void;
 }
 declare const Toolbar: React.FC<ToolbarProps>;
 export default Toolbar;

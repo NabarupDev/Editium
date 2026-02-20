@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSlate, ReactEditor } from 'slate-react';
 import { HistoryEditor } from 'slate-history';
 import { Editor, Transforms, Range } from 'slate';
+import EmojiPicker from 'emoji-picker-react';
 import {
   BoldIcon,
   ItalicIcon,
@@ -30,9 +31,10 @@ import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
   DocumentArrowDownIcon,
-  DocumentArrowUpIcon
+  DocumentArrowUpIcon,
+  FaceSmileIcon
 } from '@heroicons/react/24/outline';
-import { isMarkActive, isBlockActive, toggleMark, toggleBlock, isLinkActive, insertLink, unwrapLink, isAlignmentActive, toggleAlignment, indentListItem, outdentListItem, getLinkAtCursor, insertHorizontalRule, applyColor, applyBackgroundColor, getActiveColor, getActiveBackgroundColor, insertImage, isValidImageUrl, insertTable, addTableRow, removeTableRow, addTableColumn, removeTableColumn, isInTable, findAllMatches, navigateToMatch, replaceMatch, replaceAllMatches } from './utils';
+import { isMarkActive, isBlockActive, toggleMark, toggleBlock, isLinkActive, insertLink, unwrapLink, isAlignmentActive, toggleAlignment, indentListItem, outdentListItem, getLinkAtCursor, insertHorizontalRule, applyColor, applyBackgroundColor, getActiveColor, getActiveBackgroundColor, insertImage, isValidImageUrl, insertEmoji, insertTable, addTableRow, removeTableRow, addTableColumn, removeTableColumn, isInTable, findAllMatches, navigateToMatch, replaceMatch, replaceAllMatches } from './utils';
 import { FormatType, BlockType, ToolbarItem, AlignmentType, LinkElement, ImageElement } from './types';
 
 interface ToolbarProps {
@@ -447,11 +449,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const [tableRows, setTableRows] = useState(3);
   const [tableCols, setTableCols] = useState(3);
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [replaceText, setReplaceText] = useState('');
   const [totalMatches, setTotalMatches] = useState(0);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   
   const searchQuery = propSearchQuery;
   const searchMatches = propSearchMatches;
@@ -719,6 +724,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
     onExportPdf?.();
   };
 
+  const handleEmojiSelect = (emojiObject: any) => {
+    insertEmoji(editor, emojiObject.emoji);
+    setShowEmojiPicker(false);
+  };
+
   React.useEffect(() => {
     if (!searchQuery || !showFindReplace) {
       onSearchMatchesChange?.([]);
@@ -818,6 +828,19 @@ const Toolbar: React.FC<ToolbarProps> = ({
     };
   }, []);
 
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showEmojiPicker]);
+
   const blockFormattingItems = ['paragraph', 'heading-one', 'heading-two', 'heading-three', 'heading-four', 'heading-five', 'heading-six', 'heading-seven', 'heading-eight'];
   const alignmentItems = ['left', 'center', 'right', 'justify'];
   const formatItems = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'superscript', 'subscript'];
@@ -826,6 +849,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const colorItems = ['text-color', 'bg-color'];
   const insertItems = ['link', 'horizontal-rule', 'image', 'table'];
   const editItems = ['undo', 'redo'];
+  const fileItems = ['import-docx', 'export-docx', 'export-pdf'];
   
   const colorPalette = [
     { name: 'Black', value: '#000000' },
@@ -871,6 +895,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
         if (editItems.includes(prevItem)) {
           const firstEditIndex = items.findIndex(i => editItems.includes(i));
           if (firstEditIndex !== index - 1) return null;
+        }
+        if (fileItems.includes(prevItem)) {
+          const firstFileIndex = items.findIndex(i => fileItems.includes(i));
+          if (firstFileIndex !== index - 1) return null;
         }
       }
       return <ToolbarSeparator key={`separator-${index}`} />;
@@ -1556,38 +1584,50 @@ const Toolbar: React.FC<ToolbarProps> = ({
           </ToolbarButton>
         );
       case 'import-docx':
-        return (
-          <ToolbarButton
-            key={item}
-            active={false}
-            onMouseDown={handleImportDocx}
-            title="Import from Word (.docx)"
-          >
-            <DocumentArrowUpIcon style={{ width: '18px', height: '18px' }} />
-          </ToolbarButton>
-        );
       case 'export-docx':
+      case 'export-pdf': {
+        const firstFileIndex = items.findIndex(i => fileItems.includes(i));
+        const currentIndex = items.findIndex(i => i === item);
+        
+        if (firstFileIndex !== currentIndex) return null;
+        
         return (
-          <ToolbarButton
-            key={item}
-            active={false}
-            onMouseDown={handleExportDocx}
-            title="Export to Word (.docx)"
+          <Dropdown
+            key="file-menu"
+            trigger={<span>File</span>}
+            title="Import/Export"
+            editor={editor}
           >
-            <DocumentArrowDownIcon style={{ width: '18px', height: '18px' }} />
-          </ToolbarButton>
+            {items.includes('import-docx') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={handleImportDocx}
+                icon={<DocumentArrowUpIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Import Word (.docx)
+              </DropdownItem>
+            )}
+            {items.includes('export-docx') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={handleExportDocx}
+                icon={<DocumentArrowDownIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Export to Word (.docx)
+              </DropdownItem>
+            )}
+            {items.includes('export-pdf') && (
+              <DropdownItem
+                active={false}
+                onMouseDown={handleExportPdf}
+                icon={<ArrowDownTrayIcon style={{ width: '16px', height: '16px' }} />}
+              >
+                Export to PDF
+              </DropdownItem>
+            )}
+          </Dropdown>
         );
-      case 'export-pdf':
-        return (
-          <ToolbarButton
-            key={item}
-            active={false}
-            onMouseDown={handleExportPdf}
-            title="Export to PDF"
-          >
-            <ArrowDownTrayIcon style={{ width: '18px', height: '18px' }} />
-          </ToolbarButton>
-        );
+      }
       case 'fullscreen':
         return (
           <ToolbarButton
@@ -1605,6 +1645,48 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <ArrowsPointingOutIcon style={{ width: '18px', height: '18px' }} />
             )}
           </ToolbarButton>
+        );
+      case 'emoji':
+        return (
+          <div key={item} style={{ position: 'relative', display: 'inline-block' }} ref={emojiPickerRef}>
+            <ToolbarButton
+              active={showEmojiPicker}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setShowEmojiPicker(!showEmojiPicker);
+              }}
+              title="Emoji Picker"
+            >
+              <FaceSmileIcon style={{ width: '18px', height: '18px' }} />
+            </ToolbarButton>
+            {showEmojiPicker && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: '0',
+                  zIndex: 10000,
+                  marginTop: '8px',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  backgroundColor: '#fff',
+                  overflow: 'hidden',
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <EmojiPicker
+                  height={420}
+                  width={350}
+                  onEmojiClick={handleEmojiSelect}
+                  theme="light"
+                  searchDisabled={false}
+                  previewConfig={{
+                    showPreview: true
+                  }}
+                />
+              </div>
+            )}
+          </div>
         );
       default:
         return null;

@@ -234,6 +234,18 @@ export const insertImage = (editor: Editor, url: string, alt?: string, width?: n
   Transforms.insertNodes(editor, paragraph);
 };
 
+export const insertEmoji = (editor: Editor, emoji: string): void => {
+  const text = emoji;
+  
+  if (editor.selection) {
+    // If there's a selection, insert emoji at the cursor
+    Transforms.insertText(editor, text);
+  } else {
+    // If no selection, just insert the emoji
+    Transforms.insertText(editor, text);
+  }
+};
+
 export const isValidImageUrl = (url: string): boolean => {
   try {
     const parsedUrl = new URL(url);

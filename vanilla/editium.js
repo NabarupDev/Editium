@@ -24,6 +24,8 @@ class Editium {
     this.openDropdown = null;
     this.linkPopup = null;
     this.selectedLink = null;
+    this.showEmojiPicker = false;
+    this.emojiPickerElement = null;
     
     if (!this.container) {
       throw new Error('Container element is required');
@@ -103,7 +105,9 @@ class Editium {
       'separator',
       'bulleted-list', 'numbered-list', 'indent', 'outdent',
       'separator',
-      'link', 'image', 'table', 'horizontal-rule', 'undo', 'redo',
+      'link', 'image', 'table', 'horizontal-rule', 'emoji', 'undo', 'redo',
+      'separator',
+      'import-docx', 'export-docx', 'export-pdf',
       'separator',
       'find-replace', 'fullscreen', 'view-output'
     ];
@@ -120,8 +124,9 @@ class Editium {
       color: ['text-color', 'bg-color'],
       blocks: ['blockquote', 'code-block'],
       lists: ['bulleted-list', 'numbered-list', 'indent', 'outdent'],
-      insert: ['link', 'image', 'table', 'horizontal-rule'],
+      insert: ['link', 'image', 'table', 'horizontal-rule', 'emoji'],
       edit: ['undo', 'redo'],
+      file: ['import-docx', 'export-docx', 'export-pdf'],
       view: ['preview', 'view-html', 'view-json']
     };
     
@@ -134,6 +139,7 @@ class Editium {
       toolbar.appendChild(this.createGroupDropdown('Lists', groups.lists));
       toolbar.appendChild(this.createGroupDropdown('Insert', groups.insert));
       toolbar.appendChild(this.createGroupDropdown('Edit', groups.edit));
+      toolbar.appendChild(this.createGroupDropdown('File', groups.file));
       toolbar.appendChild(this.createGroupDropdown('View', groups.view));
       
       const spacer = document.createElement('div');
@@ -147,7 +153,8 @@ class Editium {
     } else {
       const blockFormats = groups.paragraph;
       const alignments = groups.align;
-      let processedGroups = { block: false, align: false };
+      const fileItems = groups.file;
+      let processedGroups = { block: false, align: false, file: false };
       
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
@@ -164,7 +171,10 @@ class Editium {
         } else if (alignments.includes(item) && !processedGroups.align) {
           toolbar.appendChild(this.createAlignmentDropdown());
           processedGroups.align = true;
-        } else if (!blockFormats.includes(item) && !alignments.includes(item)) {
+        } else if (fileItems.includes(item) && !processedGroups.file) {
+          toolbar.appendChild(this.createGroupDropdown('File', groups.file));
+          processedGroups.file = true;
+        } else if (!blockFormats.includes(item) && !alignments.includes(item) && !fileItems.includes(item)) {
           const button = this.createToolbarButton(item);
           if (button) {
             toolbar.appendChild(button);
@@ -505,6 +515,292 @@ class Editium {
       }
     }, 0);
   }
+
+  toggleEmojiPicker() {
+    this.showEmojiPicker = !this.showEmojiPicker;
+    if (this.showEmojiPicker) {
+      this.createAndShowEmojiPicker();
+    } else {
+      this.closeEmojiPicker();
+    }
+  }
+
+  closeEmojiPicker() {
+    const backdrop = document.querySelector('[data-emojiBackdrop="true"]');
+    if (backdrop && backdrop.parentNode) {
+      backdrop.parentNode.removeChild(backdrop);
+    }
+    if (this.emojiPickerElement && this.emojiPickerElement.parentNode) {
+      this.emojiPickerElement.parentNode.removeChild(this.emojiPickerElement);
+    }
+    this.emojiPickerElement = null;
+    this.showEmojiPicker = false;
+  }
+
+  getEmojiCategories() {
+    return {
+      'Smileys': '😀😃😄😁😆😅😂🤣😊😇🙂🙃😉😌😍🥰😘😗😚😙😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😏😒😞😔😟😕🙁☹️😲😱😳🥺😦😧😨😰😥😢😭😱😱😤😠😡🤬😈👿💀☠️💩🤡👹👺👻👽👾🤖😺😸😹😻😼😽🙀😿😾🙈🙉🙊',
+      'Animals': '💋👋👏🙌👐🤲🤝🤜🤛✊👊🤚🖐️✋🖖👌🤌🤏✌️🤞🫰🤟🤘🤙👍👎👊👋☝️👆👇👈👉🫵💪🦾🦿🦵🦶👂👃🧠🦷🦴👀👁️👅👄🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🐒🐶🐱🐭',
+      'Food': '🍎🍊🍋🍌🍉🍇🍓🫐🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🥦🥬🥒🌶️🌽🥕🧄🧅🥔🍠🥐🥯🍞🥖🥨🧀🥚🍳🧈🥞🥓🥞🍖🍗🥩🍝🍜🍲🍛🍣🍱🥘🍰🎂🧁🍮🍭🍬🍫🍿🍩🍪',
+      'Nature': '🌲🌳🌴🌱🌿☘️🍀🎍🎎🎏🎐🎑🌾💐🌷🌹🥀🌺🌻🌼🌸⛅🌤️🌥️☁️🌦️🌧️⛈️🌩️⛈️🌨️❄️☃️⛄🌬️💨💧💦☔🍏🌊🏔️⛰️🌋🗻🏕️⛺🏠🏡',
+      'Objects': '⌚📱💻⌨️🖥️🖨️🖱️🖲️🕹️🗜️💽💾💿📀📼📷📸📹🎥🎬📽️🎞️📞☎️📟📠📺📻🎙️🎚️🎛️🧭⏱️⏲️⏰🕰️⌛⌚📡🔋🔌💡🔦🕯️🪔🧯🛢️💸💵💴💶💷💰💳💎⚖️🧰🔧🔨⚒️🛠️⛏️🔩⚙️🧱⛓️🧲🔫💣🧨🪃🔮📿🧿💈⚗️🔭🔬🕯️💇💈💳🎁🎀🎊🎉🎈',
+      'Travel': '✈️🛫🛬🛩️💺🛰️🚀🛸✉️📩📨📤📥📦🏷️🧧📪📫📬📭📮📗📕📖📘📙📚📓📒📏📐📈📉📊📵📴🧷🧹🧺🧻🧼🧽🧯🛒🚚🚛🚐🚙🚗🚕🚌🚎🏎️🚓🚑🚒🚐🛻🚚🚛🚜🏍️🛵🦯🦽🦼🛺🚲🛴🛹🛼🚏⛽🚨🚥🚦🛑🚧⚓⛵🛶🚤🛳️⛴️🛥️🚢⚓',
+      'Symbols': '❤️🧡💛💚💙💜🖤🤍🤎💔💕💞💓💗💖💘💝💟👋🤚🖐️✋🖖👌🤌🤏✌️🤞🫰🤟🤘🤙👍👎👊☝️👆👇👈👉☜☝☞☟💪🦾🦿🦵🦶👂👃🧠🦷🦴👀👁️👅👄😀😃😄😁😆😅😂🤣😊😇',
+      'Flags': '🏁🚩🎌🏴🏳️🏳️‍🌈🏳️‍⚧️🏴‍☠️🇦🇫🇦🇽🇦🇱🇩🇿🇦🇩🇦🇴🇦🇮🇦🇶🇦🇬🇦🇷🇦🇲🇦🇼🇦🇺🇦🇹🇦🇿🇧🇸🇧🇭🇧🇩🇧🇧🇧🇾🇧🇪🇧🇿🇧🇯🇧🇹🇧🇴🇧🇦'
+    };
+  }
+
+  createAndShowEmojiPicker() {
+    if (this.emojiPickerElement) {
+      this.closeEmojiPicker();
+      return;
+    }
+
+    const categories = this.getEmojiCategories();
+    
+    const pickerContainer = document.createElement('div');
+    pickerContainer.className = 'editium-emoji-picker-container';
+    pickerContainer.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10000;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 12px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+
+    const header = document.createElement('div');
+    header.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #e9ecef;
+      padding-bottom: 8px;
+    `;
+
+    const title = document.createElement('h3');
+    title.textContent = 'Emoji Picker';
+    title.style.cssText = 'margin: 0; font-size: 16px; font-weight: 600; color: #222f3e;';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = `
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #6c757d;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    closeBtn.onclick = () => this.closeEmojiPicker();
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    pickerContainer.appendChild(header);
+
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search emoji...';
+    searchInput.style.cssText = `
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    `;
+    pickerContainer.appendChild(searchInput);
+
+    const tabsContainer = document.createElement('div');
+    tabsContainer.style.cssText = `
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #e9ecef;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    `;
+
+    const contentContainer = document.createElement('div');
+    contentContainer.style.cssText = `
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 300px;
+      overflow-y: auto;
+    `;
+
+    const categoryTabs = {};
+
+    Object.keys(categories).forEach((category, index) => {
+      const tab = document.createElement('button');
+      tab.textContent = category[0];
+      tab.style.cssText = `
+        background: ${index === 0 ? '#dee2e6' : 'transparent'};
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        color: #222f3e;
+        white-space: nowrap;
+        transition: background-color 0.2s;
+      `;
+      
+      tab.onmouseover = () => {
+        if (!tab.dataset.active) tab.style.backgroundColor = '#f0f0f0';
+      };
+      tab.onmouseout = () => {
+        if (!tab.dataset.active) tab.style.backgroundColor = 'transparent';
+      };
+
+      tab.onclick = () => {
+        Object.values(categoryTabs).forEach(t => {
+          t.style.backgroundColor = 'transparent';
+          t.dataset.active = '';
+        });
+        tab.style.backgroundColor = '#dee2e6';
+        tab.dataset.active = 'true';
+
+        contentContainer.innerHTML = '';
+        const emojis = categories[category];
+        for (let emoji of emojis) {
+          const emojiBtn = document.createElement('button');
+          emojiBtn.textContent = emoji;
+          emojiBtn.style.cssText = `
+            background: none;
+            border: 1px solid transparent;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+          `;
+          emojiBtn.onmouseover = () => {
+            emojiBtn.style.backgroundColor = '#f0f0f0';
+            emojiBtn.style.borderColor = '#dee2e6';
+            emojiBtn.style.transform = 'scale(1.2)';
+          };
+          emojiBtn.onmouseout = () => {
+            emojiBtn.style.backgroundColor = 'transparent';
+            emojiBtn.style.borderColor = 'transparent';
+            emojiBtn.style.transform = 'scale(1)';
+          };
+          emojiBtn.onclick = (e) => {
+            e.preventDefault();
+            this.insertEmoji(emoji);
+            this.closeEmojiPicker();
+          };
+          contentContainer.appendChild(emojiBtn);
+        }
+      };
+
+      categoryTabs[category] = tab;
+      tabsContainer.appendChild(tab);
+    });
+
+    // Show first category by default
+    const firstTab = Object.values(categoryTabs)[0];
+    if (firstTab) firstTab.click();
+
+    pickerContainer.appendChild(tabsContainer);
+    pickerContainer.appendChild(contentContainer);
+
+    // Handle search
+    searchInput.oninput = (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      if (searchTerm) {
+        contentContainer.innerHTML = '';
+        Object.values(categories).forEach(emojis => {
+          // Simple emoji search - just show all emojis if searching
+          for (let emoji of emojis) {
+            const emojiBtn = document.createElement('button');
+            emojiBtn.textContent = emoji;
+            emojiBtn.style.cssText = `
+              background: none;
+              border: 1px solid transparent;
+              font-size: 28px;
+              cursor: pointer;
+              padding: 4px;
+              border-radius: 4px;
+              transition: all 0.2s;
+            `;
+            emojiBtn.onmouseover = () => {
+              emojiBtn.style.backgroundColor = '#f0f0f0';
+              emojiBtn.style.borderColor = '#dee2e6';
+              emojiBtn.style.transform = 'scale(1.2)';
+            };
+            emojiBtn.onmouseout = () => {
+              emojiBtn.style.backgroundColor = 'transparent';
+              emojiBtn.style.borderColor = 'transparent';
+              emojiBtn.style.transform = 'scale(1)';
+            };
+            emojiBtn.onclick = (event) => {
+              event.preventDefault();
+              this.insertEmoji(emoji);
+              this.closeEmojiPicker();
+            };
+            contentContainer.appendChild(emojiBtn);
+          }
+        });
+      } else {
+        firstTab.click();
+      }
+    };
+
+    // Close on outside click
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9999;
+    `;
+    backdrop.onclick = () => this.closeEmojiPicker();
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(pickerContainer);
+
+    this.emojiPickerElement = pickerContainer;
+    backdrop.dataset.emojiBackdrop = 'true';
+  }
+
+  insertEmoji(emoji) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) {
+      this.editor.focus();
+      document.execCommand('insertText', false, emoji);
+    } else {
+      const range = selection.getRangeAt(0);
+      range.insertNode(document.createTextNode(emoji));
+      range.setStartAfter(range.commonAncestorContainer.lastChild);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    this.editor.focus();
+    this.saveState();
+    this.triggerChange();
+  }
   
   createToolbarButton(type) {
     const config = this.getButtonConfig(type);
@@ -612,6 +908,7 @@ class Editium {
       'code-block': { icon: '<i class="fa-solid fa-file-code"></i>', title: 'Code Block', action: () => this.insertCodeBlock() },
       'horizontal-rule': { icon: '<i class="fa-solid fa-minus"></i>', title: 'Horizontal Rule', action: () => this.execCommand('insertHorizontalRule') },
       'table': { icon: '<i class="fa-solid fa-table"></i>', title: 'Insert Table', action: () => this.showTableModal() },
+      'emoji': { icon: '😊', title: 'Emoji Picker', action: () => this.toggleEmojiPicker() },
       'text-color': { icon: '<i class="fa-solid fa-palette"></i>', title: 'Text Color', action: () => this.showColorPicker('foreColor') },
       'bg-color': { icon: '<i class="fa-solid fa-fill-drip"></i>', title: 'Background Color', action: () => this.showColorPicker('hiliteColor') },
       'undo': { icon: '<i class="fa-solid fa-rotate-left"></i>', title: 'Undo (Ctrl+Z)', action: () => this.undo() },
@@ -620,7 +917,10 @@ class Editium {
       'view-html': { icon: '<i class="fa-solid fa-code"></i>', title: 'View HTML', action: () => this.viewOutput('html') },
       'view-json': { icon: '<i class="fa-solid fa-brackets-curly"></i>', title: 'View JSON', action: () => this.viewOutput('json') },
       'find-replace': { icon: '<i class="fa-solid fa-magnifying-glass"></i>', title: 'Find & Replace', action: () => this.toggleFindReplace() },
-      'fullscreen': { icon: '<i class="fa-solid fa-expand"></i>', title: 'Toggle Fullscreen (F11)', action: () => this.toggleFullscreen() }
+      'fullscreen': { icon: '<i class="fa-solid fa-expand"></i>', title: 'Toggle Fullscreen (F11)', action: () => this.toggleFullscreen() },
+      'import-docx': { icon: '<i class="fa-solid fa-arrow-up-from-bracket"></i>', title: 'Import Word (.docx)', action: () => this.importDocx() },
+      'export-docx': { icon: '<i class="fa-solid fa-arrow-down-to-bracket"></i>', title: 'Export to Word (.docx)', action: () => this.exportDocx() },
+      'export-pdf': { icon: '<i class="fa-solid fa-download"></i>', title: 'Export to PDF', action: () => this.exportPdf() }
     };
     
     return configs[type];
@@ -2128,6 +2428,449 @@ class Editium {
     return div.innerHTML;
   }
   
+  importDocx() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    input.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        try {
+          // Validate file type
+          if (!file.name.endsWith('.docx')) {
+            throw new Error('Please select a valid .docx file');
+          }
+          
+          // Show loading notification
+          this.showNotification('Importing document...', 'info');
+          
+          // Dynamically import mammoth
+          const mammoth = await this.loadMammoth();
+          
+          if (!mammoth) {
+            throw new Error('Mammoth library failed to load properly');
+          }
+          
+          // Try reading with Blob first (more direct approach)
+          let result;
+          try {
+            // Use blob approach - Mammoth natively supports this
+            result = await mammoth.convertToHtml({ blob: file });
+          } catch (blobError) {
+            console.warn('Blob approach failed, trying ArrayBuffer:', blobError);
+            // Fallback to ArrayBuffer
+            const arrayBuffer = await this.readFileAsUint8Array(file);
+            
+            if (!arrayBuffer || arrayBuffer.length === 0) {
+              throw new Error('File is empty or could not be read');
+            }
+            
+            result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+          }
+          
+          if (!result || !result.value) {
+            throw new Error('Could not convert document to HTML');
+          }
+          
+          const html = result.value;
+          
+          // Append imported content to existing content
+          if (html && html.trim()) {
+            this.editor.innerHTML += html;
+            this.saveState();
+            this.triggerChange();
+            this.updateWordCount();
+            this.showNotification(`Successfully imported ${file.name}`, 'success');
+          } else {
+            this.showNotification(`Document is empty or could not be imported`, 'error');
+          }
+        } catch (error) {
+          console.error('Error importing .docx file:', error);
+          this.showNotification(`Failed to import: ${error.message || 'Unknown error'}`, 'error');
+        }
+      }
+    };
+    input.click();
+  }
+  
+  readFileAsUint8Array(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        try {
+          const arrayBuffer = event.target?.result;
+          if (!(arrayBuffer instanceof ArrayBuffer)) {
+            throw new Error('Failed to read file as ArrayBuffer');
+          }
+          
+          // Convert ArrayBuffer to Uint8Array for better compatibility
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          if (uint8Array.length === 0) {
+            throw new Error('File is empty');
+          }
+          
+          resolve(uint8Array);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = (error) => {
+        reject(new Error('File read error: ' + (error.message || 'Unknown error')));
+      };
+      
+      reader.onabort = () => {
+        reject(new Error('File read was aborted'));
+      };
+      
+      try {
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        reject(new Error('Failed to initiate file read: ' + error.message));
+      }
+    });
+  }
+  
+  async loadMammoth() {
+    if (window.mammoth && window.mammoth.convertToHtml) {
+      return window.mammoth;
+    }
+    
+    return new Promise((resolve, reject) => {
+      // Create script element
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+      script.async = true;
+      
+      // Set up timeout
+      const timeout = setTimeout(() => {
+        reject(new Error('Timeout: Mammoth library took too long to load (15s)'));
+      }, 15000);
+      
+      // Handle successful load
+      script.onload = () => {
+        clearTimeout(timeout);
+        
+        // Wait a bit for library to fully initialize
+        setTimeout(() => {
+          if (window.mammoth && typeof window.mammoth.convertToHtml === 'function') {
+            resolve(window.mammoth);
+          } else {
+            reject(new Error('Mammoth library loaded but convertToHtml method not found'));
+          }
+        }, 100);
+      };
+      
+      // Handle load error
+      script.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Failed to load Mammoth library from CDN. Check your internet connection.'));
+      };
+      
+      // Start loading
+      document.head.appendChild(script);
+    });
+  }
+  
+  exportDocx() {
+    try {
+      const html = this.getHTML();
+      if (!html || html.trim() === '') {
+        this.showNotification('No content to export', 'error');
+        return;
+      }
+      
+      // Create a proper docx-like file with HTML content
+      // Note: This creates an HTML file with .docx extension that opens in Word
+      const htmlContent = `
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Document</title>
+<style>
+body { font-family: 'Calibri', 'Arial', sans-serif; margin: 20px; line-height: 1.6; color: #000; }
+h1 { font-size: 28pt; margin: 12px 0 6px 0; font-weight: bold; }
+h2 { font-size: 24pt; margin: 12px 0 6px 0; font-weight: bold; }
+h3 { font-size: 20pt; margin: 12px 0 6px 0; font-weight: bold; }
+h4 { font-size: 16pt; margin: 12px 0 6px 0; font-weight: bold; }
+h5 { font-size: 13pt; margin: 12px 0 6px 0; font-weight: bold; }
+h6 { font-size: 11pt; margin: 12px 0 6px 0; font-weight: bold; }
+p { margin: 0 0 10px 0; }
+ul, ol { margin: 10px 0 10px 40px; }
+li { margin: 5px 0; }
+blockquote { margin: 10px 0; padding: 10px 20px; border-left: 4px solid #ccc; background: #f9f9f9; }
+pre { background: #f4f4f4; padding: 12px; border-radius: 3px; overflow-x: auto; font-family: 'Courier New', monospace; }
+code { background: #f4f4f4; padding: 2px 4px; border-radius: 2px; font-family: 'Courier New', monospace; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+table, th, td { border: 1px solid #999; }
+th, td { padding: 8px; text-align: left; }
+th { background: #f0f0f0; font-weight: bold; }
+strong, b { font-weight: bold; }
+em, i { font-style: italic; }
+u { text-decoration: underline; }
+s, del { text-decoration: line-through; }
+hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+</style>
+</head>
+<body>
+${html}
+</body>
+</html>
+      `;
+      
+      // Create a blob and download
+      const blob = new Blob([htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'document.docx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      this.showNotification('Document exported successfully', 'success');
+    } catch (error) {
+      console.error('Error exporting to .docx:', error);
+      this.showNotification(`Failed to export document: ${error.message}`, 'error');
+    }
+  }
+  
+  exportPdf() {
+    try {
+      const html = this.getHTML();
+      if (!html || html.trim() === '') {
+        this.showNotification('No content to export', 'error');
+        return;
+      }
+      
+      // Show loading notification
+      this.showNotification('Loading PDF libraries...', 'info');
+      
+      // Use async wrapper to handle promises properly
+      this.loadPdfLibrariesAndExport(html).catch(error => {
+        console.error('PDF Export Error:', error);
+        this.showNotification(`PDF export failed: ${error.message || 'Unknown error'}`, 'error');
+      });
+      
+    } catch (error) {
+      console.error('Error starting PDF export:', error);
+      this.showNotification('Failed to start PDF export', 'error');
+    }
+  }
+  
+  async loadPdfLibrariesAndExport(html) {
+    try {
+      // Load libraries
+      await this.loadPdfLibraries();
+      
+      // Check if libraries are available
+      if (!window.html2canvas) {
+        throw new Error('html2canvas library failed to load');
+      }
+      
+      if (!window.jsPDF) {
+        throw new Error('jsPDF library failed to load');
+      }
+      
+      const html2canvas = window.html2canvas;
+      const jsPDF = window.jsPDF;
+      
+      // Create temporary element with content
+      const element = document.createElement('div');
+      element.innerHTML = html;
+      element.style.padding = '20px';
+      element.style.backgroundColor = 'white';
+      element.style.fontFamily = 'Arial, sans-serif';
+      element.style.lineHeight = '1.6';
+      element.style.color = '#333';
+      element.style.maxWidth = '100%';
+      element.style.fontSize = '14px';
+      
+      // Temporarily add to DOM for rendering
+      element.style.position = 'fixed';
+      element.style.left = '-9999px';
+      element.style.top = '-9999px';
+      element.style.width = '800px';
+      document.body.appendChild(element);
+      
+      try {
+        // Convert to canvas
+        const canvas = await html2canvas(element, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          windowHeight: element.scrollHeight,
+          windowWidth: element.scrollWidth
+        });
+        
+        // Remove temporary element
+        if (element.parentNode) {
+          document.body.removeChild(element);
+        }
+        
+        // Create PDF
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+        
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = margin;
+        
+        // Add first page
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - (margin * 2));
+        
+        // Add subsequent pages if needed
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight + margin;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+          heightLeft -= (pageHeight - (margin * 2));
+        }
+        
+        pdf.save('document.pdf');
+        this.showNotification('PDF exported successfully', 'success');
+      } catch (canvasError) {
+        // Clean up if error occurs
+        if (element.parentNode) {
+          document.body.removeChild(element);
+        }
+        console.error('Canvas/PDF generation error:', canvasError);
+        throw new Error('Failed to generate PDF: ' + canvasError.message);
+      }
+    } catch (error) {
+      console.error('Error in PDF export:', error);
+      throw error;
+    }
+  }
+  
+  async loadPdfLibraries() {
+    try {
+      // Load html2canvas
+      if (!window.html2canvas) {
+        await this.loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', 'html2canvas');
+      }
+      
+      // Load jsPDF - try unpkg CDN first
+      if (!window.jsPDF) {
+        await this.loadScript('https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js', 'jsPDF');
+      }
+      
+      // If still not loaded, try alternative CDN
+      if (!window.html2canvas || !window.jsPDF) {
+        throw new Error('PDF libraries did not load properly');
+      }
+    } catch (error) {
+      console.error('Error loading PDF libraries:', error);
+      throw error;
+    }
+  }
+  
+  loadScript(src, globalName) {
+    return new Promise((resolve, reject) => {
+      // Check if already loaded
+      if (window[globalName]) {
+        resolve();
+        return;
+      }
+      
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.defer = false;
+      
+      // Add a timeout to catch hung requests
+      const timeout = setTimeout(() => {
+        reject(new Error(`Timeout loading ${globalName} from ${src}`));
+      }, 15000);
+      
+      script.onload = () => {
+        clearTimeout(timeout);
+        
+        // Wait a bit for the library to initialize
+        setTimeout(() => {
+          if (window[globalName]) {
+            resolve();
+          } else {
+            reject(new Error(`${globalName} not found on window after loading`));
+          }
+        }, 100);
+      };
+      
+      script.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error(`Failed to load script: ${src}`));
+      };
+      
+      document.head.appendChild(script);
+    });
+  }
+  
+  showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    const bgColor = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff';
+    
+    notification.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: ${bgColor};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 10001;
+      animation: slideInUp 0.3s ease-out;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    `;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Add animation
+    const style = document.createElement('style');
+    if (!document.getElementById('editium-notification-styles')) {
+      style.id = 'editium-notification-styles';
+      style.textContent = `
+        @keyframes slideInUp {
+          from {
+            transform: translateY(100px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideInUp 0.3s ease-out reverse';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  
   saveState() {
     const state = this.editor.innerHTML;
     
@@ -2215,6 +2958,9 @@ class Editium {
 
         e.preventDefault();
         this.closeLinkPopup();
+      } else if (e.key === 'Escape' && this.showEmojiPicker) {
+        e.preventDefault();
+        this.closeEmojiPicker();
       }
     });
     
