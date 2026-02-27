@@ -37,11 +37,13 @@ A lightweight, powerful rich text editor built with pure vanilla JavaScript. Zer
 <!-- unpkg -->
 <link rel="stylesheet" href="https://unpkg.com/editium/vanilla/editium.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 <script src="https://unpkg.com/editium/vanilla/editium.js"></script>
 
 <!-- jsDelivr -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editium/vanilla/editium.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/editium/vanilla/editium.js"></script>
 ```
 

@@ -105,9 +105,11 @@ class Editium {
       'separator',
       'bulleted-list', 'numbered-list', 'indent', 'outdent',
       'separator',
-      'link', 'image', 'table', 'horizontal-rule', 'emoji', 'undo', 'redo',
+      'link', 'image', 'table', 'horizontal-rule', 'undo', 'redo',
       'separator',
       'import-docx', 'export-docx', 'export-pdf',
+      'separator',
+      'emoji',
       'separator',
       'find-replace', 'fullscreen', 'view-output'
     ];
@@ -124,7 +126,7 @@ class Editium {
       color: ['text-color', 'bg-color'],
       blocks: ['blockquote', 'code-block'],
       lists: ['bulleted-list', 'numbered-list', 'indent', 'outdent'],
-      insert: ['link', 'image', 'table', 'horizontal-rule', 'emoji'],
+      insert: ['link', 'image', 'table', 'horizontal-rule'],
       edit: ['undo', 'redo'],
       file: ['import-docx', 'export-docx', 'export-pdf'],
       view: ['preview', 'view-html', 'view-json']
@@ -142,6 +144,15 @@ class Editium {
       toolbar.appendChild(this.createGroupDropdown('File', groups.file));
       toolbar.appendChild(this.createGroupDropdown('View', groups.view));
       
+      const emojiWrapper = document.createElement('div');
+      emojiWrapper.style.cssText = 'position: relative; display: inline-block;';
+      const emojiButton = this.createToolbarButton('emoji');
+      if (emojiButton) {
+        emojiWrapper.appendChild(emojiButton);
+        toolbar.appendChild(emojiWrapper);
+        this._emojiWrapper = emojiWrapper;
+      }
+
       const spacer = document.createElement('div');
       spacer.style.flex = '1';
       toolbar.appendChild(spacer);
@@ -526,278 +537,126 @@ class Editium {
   }
 
   closeEmojiPicker() {
-    const backdrop = document.querySelector('[data-emojiBackdrop="true"]');
-    if (backdrop && backdrop.parentNode) {
-      backdrop.parentNode.removeChild(backdrop);
+    if (this._emojiBackdrop && this._emojiBackdrop.parentNode) {
+      this._emojiBackdrop.parentNode.removeChild(this._emojiBackdrop);
     }
+    this._emojiBackdrop = null;
     if (this.emojiPickerElement && this.emojiPickerElement.parentNode) {
       this.emojiPickerElement.parentNode.removeChild(this.emojiPickerElement);
     }
     this.emojiPickerElement = null;
     this.showEmojiPicker = false;
+
+    // Remove reposition listeners
+    if (this._emojiRepositionHandler) {
+      window.removeEventListener('scroll', this._emojiRepositionHandler, true);
+      window.removeEventListener('resize', this._emojiRepositionHandler);
+      this._emojiRepositionHandler = null;
+    }
   }
 
-  getEmojiCategories() {
-    return {
-      'Smileys': '😀😃😄😁😆😅😂🤣😊😇🙂🙃😉😌😍🥰😘😗😚😙😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😏😒😞😔😟😕🙁☹️😲😱😳🥺😦😧😨😰😥😢😭😱😱😤😠😡🤬😈👿💀☠️💩🤡👹👺👻👽👾🤖😺😸😹😻😼😽🙀😿😾🙈🙉🙊',
-      'Animals': '💋👋👏🙌👐🤲🤝🤜🤛✊👊🤚🖐️✋🖖👌🤌🤏✌️🤞🫰🤟🤘🤙👍👎👊👋☝️👆👇👈👉🫵💪🦾🦿🦵🦶👂👃🧠🦷🦴👀👁️👅👄🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🐒🐶🐱🐭',
-      'Food': '🍎🍊🍋🍌🍉🍇🍓🫐🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🥦🥬🥒🌶️🌽🥕🧄🧅🥔🍠🥐🥯🍞🥖🥨🧀🥚🍳🧈🥞🥓🥞🍖🍗🥩🍝🍜🍲🍛🍣🍱🥘🍰🎂🧁🍮🍭🍬🍫🍿🍩🍪',
-      'Nature': '🌲🌳🌴🌱🌿☘️🍀🎍🎎🎏🎐🎑🌾💐🌷🌹🥀🌺🌻🌼🌸⛅🌤️🌥️☁️🌦️🌧️⛈️🌩️⛈️🌨️❄️☃️⛄🌬️💨💧💦☔🍏🌊🏔️⛰️🌋🗻🏕️⛺🏠🏡',
-      'Objects': '⌚📱💻⌨️🖥️🖨️🖱️🖲️🕹️🗜️💽💾💿📀📼📷📸📹🎥🎬📽️🎞️📞☎️📟📠📺📻🎙️🎚️🎛️🧭⏱️⏲️⏰🕰️⌛⌚📡🔋🔌💡🔦🕯️🪔🧯🛢️💸💵💴💶💷💰💳💎⚖️🧰🔧🔨⚒️🛠️⛏️🔩⚙️🧱⛓️🧲🔫💣🧨🪃🔮📿🧿💈⚗️🔭🔬🕯️💇💈💳🎁🎀🎊🎉🎈',
-      'Travel': '✈️🛫🛬🛩️💺🛰️🚀🛸✉️📩📨📤📥📦🏷️🧧📪📫📬📭📮📗📕📖📘📙📚📓📒📏📐📈📉📊📵📴🧷🧹🧺🧻🧼🧽🧯🛒🚚🚛🚐🚙🚗🚕🚌🚎🏎️🚓🚑🚒🚐🛻🚚🚛🚜🏍️🛵🦯🦽🦼🛺🚲🛴🛹🛼🚏⛽🚨🚥🚦🛑🚧⚓⛵🛶🚤🛳️⛴️🛥️🚢⚓',
-      'Symbols': '❤️🧡💛💚💙💜🖤🤍🤎💔💕💞💓💗💖💘💝💟👋🤚🖐️✋🖖👌🤌🤏✌️🤞🫰🤟🤘🤙👍👎👊☝️👆👇👈👉☜☝☞☟💪🦾🦿🦵🦶👂👃🧠🦷🦴👀👁️👅👄😀😃😄😁😆😅😂🤣😊😇',
-      'Flags': '🏁🚩🎌🏴🏳️🏳️‍🌈🏳️‍⚧️🏴‍☠️🇦🇫🇦🇽🇦🇱🇩🇿🇦🇩🇦🇴🇦🇮🇦🇶🇦🇬🇦🇷🇦🇲🇦🇼🇦🇺🇦🇹🇦🇿🇧🇸🇧🇭🇧🇩🇧🇧🇧🇾🇧🇪🇧🇿🇧🇯🇧🇹🇧🇴🇧🇦'
-    };
+  _loadEmojiPickerScript() {
+    return new Promise((resolve) => {
+      if (customElements.get('emoji-picker')) {
+        resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = 'https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js';
+      script.onload = () => resolve();
+      script.onerror = () => resolve(); // fail silently
+      document.head.appendChild(script);
+    });
   }
 
-  createAndShowEmojiPicker() {
+  async createAndShowEmojiPicker() {
     if (this.emojiPickerElement) {
       this.closeEmojiPicker();
       return;
     }
 
-    const categories = this.getEmojiCategories();
-    
-    const pickerContainer = document.createElement('div');
-    pickerContainer.className = 'editium-emoji-picker-container';
-    pickerContainer.style.cssText = `
+    // Save current selection so we can restore it when inserting emoji
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      this._savedRange = sel.getRangeAt(0).cloneRange();
+    }
+
+    // Load the web component if not already loaded
+    await this._loadEmojiPickerScript();
+
+    // Container for the picker
+    const container = document.createElement('div');
+    container.className = 'editium-emoji-picker';
+    container.style.cssText = `
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
       z-index: 10000;
-      background: white;
-      border: 1px solid #ccc;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      padding: 12px;
-      width: 90%;
-      max-width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fff;
+      overflow: hidden;
     `;
 
-    const header = document.createElement('div');
-    header.style.cssText = `
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #e9ecef;
-      padding-bottom: 8px;
-    `;
+    // Create the emoji-picker web component
+    const picker = document.createElement('emoji-picker');
+    picker.classList.add('light');
+    container.appendChild(picker);
 
-    const title = document.createElement('h3');
-    title.textContent = 'Emoji Picker';
-    title.style.cssText = 'margin: 0; font-size: 16px; font-weight: 600; color: #222f3e;';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    closeBtn.style.cssText = `
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #6c757d;
-      padding: 0;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
-    closeBtn.onclick = () => this.closeEmojiPicker();
-
-    header.appendChild(title);
-    header.appendChild(closeBtn);
-    pickerContainer.appendChild(header);
-
-    const searchInput = document.createElement('input');
-    searchInput.type = 'text';
-    searchInput.placeholder = 'Search emoji...';
-    searchInput.style.cssText = `
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 12px;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
-      font-size: 14px;
-      box-sizing: border-box;
-    `;
-    pickerContainer.appendChild(searchInput);
-
-    const tabsContainer = document.createElement('div');
-    tabsContainer.style.cssText = `
-      display: flex;
-      gap: 4px;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #e9ecef;
-      overflow-x: auto;
-      padding-bottom: 8px;
-    `;
-
-    const contentContainer = document.createElement('div');
-    contentContainer.style.cssText = `
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      max-height: 300px;
-      overflow-y: auto;
-    `;
-
-    const categoryTabs = {};
-
-    Object.keys(categories).forEach((category, index) => {
-      const tab = document.createElement('button');
-      tab.textContent = category[0];
-      tab.style.cssText = `
-        background: ${index === 0 ? '#dee2e6' : 'transparent'};
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        padding: 6px 10px;
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 600;
-        color: #222f3e;
-        white-space: nowrap;
-        transition: background-color 0.2s;
-      `;
-      
-      tab.onmouseover = () => {
-        if (!tab.dataset.active) tab.style.backgroundColor = '#f0f0f0';
-      };
-      tab.onmouseout = () => {
-        if (!tab.dataset.active) tab.style.backgroundColor = 'transparent';
-      };
-
-      tab.onclick = () => {
-        Object.values(categoryTabs).forEach(t => {
-          t.style.backgroundColor = 'transparent';
-          t.dataset.active = '';
-        });
-        tab.style.backgroundColor = '#dee2e6';
-        tab.dataset.active = 'true';
-
-        contentContainer.innerHTML = '';
-        const emojis = categories[category];
-        for (let emoji of emojis) {
-          const emojiBtn = document.createElement('button');
-          emojiBtn.textContent = emoji;
-          emojiBtn.style.cssText = `
-            background: none;
-            border: 1px solid transparent;
-            font-size: 28px;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: all 0.2s;
-          `;
-          emojiBtn.onmouseover = () => {
-            emojiBtn.style.backgroundColor = '#f0f0f0';
-            emojiBtn.style.borderColor = '#dee2e6';
-            emojiBtn.style.transform = 'scale(1.2)';
-          };
-          emojiBtn.onmouseout = () => {
-            emojiBtn.style.backgroundColor = 'transparent';
-            emojiBtn.style.borderColor = 'transparent';
-            emojiBtn.style.transform = 'scale(1)';
-          };
-          emojiBtn.onclick = (e) => {
-            e.preventDefault();
-            this.insertEmoji(emoji);
-            this.closeEmojiPicker();
-          };
-          contentContainer.appendChild(emojiBtn);
-        }
-      };
-
-      categoryTabs[category] = tab;
-      tabsContainer.appendChild(tab);
+    // Listen for emoji selection
+    picker.addEventListener('emoji-click', (event) => {
+      this.insertEmoji(event.detail.unicode);
+      this.closeEmojiPicker();
     });
 
-    // Show first category by default
-    const firstTab = Object.values(categoryTabs)[0];
-    if (firstTab) firstTab.click();
+    // Find the emoji button to anchor positioning
+    const emojiButton = this._emojiWrapper
+      ? this._emojiWrapper.querySelector('[data-command="emoji"]')
+      : null;
 
-    pickerContainer.appendChild(tabsContainer);
-    pickerContainer.appendChild(contentContainer);
-
-    // Handle search
-    searchInput.oninput = (e) => {
-      const searchTerm = e.target.value.toLowerCase();
-      if (searchTerm) {
-        contentContainer.innerHTML = '';
-        Object.values(categories).forEach(emojis => {
-          // Simple emoji search - just show all emojis if searching
-          for (let emoji of emojis) {
-            const emojiBtn = document.createElement('button');
-            emojiBtn.textContent = emoji;
-            emojiBtn.style.cssText = `
-              background: none;
-              border: 1px solid transparent;
-              font-size: 28px;
-              cursor: pointer;
-              padding: 4px;
-              border-radius: 4px;
-              transition: all 0.2s;
-            `;
-            emojiBtn.onmouseover = () => {
-              emojiBtn.style.backgroundColor = '#f0f0f0';
-              emojiBtn.style.borderColor = '#dee2e6';
-              emojiBtn.style.transform = 'scale(1.2)';
-            };
-            emojiBtn.onmouseout = () => {
-              emojiBtn.style.backgroundColor = 'transparent';
-              emojiBtn.style.borderColor = 'transparent';
-              emojiBtn.style.transform = 'scale(1)';
-            };
-            emojiBtn.onclick = (event) => {
-              event.preventDefault();
-              this.insertEmoji(emoji);
-              this.closeEmojiPicker();
-            };
-            contentContainer.appendChild(emojiBtn);
-          }
-        });
-      } else {
-        firstTab.click();
-      }
+    // Position helper: keeps the picker anchored below the button
+    const positionPicker = () => {
+      if (!emojiButton) return;
+      const btnRect = emojiButton.getBoundingClientRect();
+      container.style.top = (btnRect.bottom + 8) + 'px';
+      let left = btnRect.right - 350;
+      if (left < 8) left = 8;
+      container.style.left = left + 'px';
     };
+    positionPicker();
 
-    // Close on outside click
+    // Backdrop to close on outside click
     const backdrop = document.createElement('div');
     backdrop.style.cssText = `
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       z-index: 9999;
     `;
     backdrop.onclick = () => this.closeEmojiPicker();
 
     document.body.appendChild(backdrop);
-    document.body.appendChild(pickerContainer);
+    document.body.appendChild(container);
 
-    this.emojiPickerElement = pickerContainer;
-    backdrop.dataset.emojiBackdrop = 'true';
+    this._emojiBackdrop = backdrop;
+    this.emojiPickerElement = container;
+
+    // Re-position on scroll/resize so picker follows the button
+    this._emojiRepositionHandler = () => positionPicker();
+    window.addEventListener('scroll', this._emojiRepositionHandler, true);
+    window.addEventListener('resize', this._emojiRepositionHandler);
   }
 
   insertEmoji(emoji) {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) {
-      this.editor.focus();
-      document.execCommand('insertText', false, emoji);
-    } else {
-      const range = selection.getRangeAt(0);
-      range.insertNode(document.createTextNode(emoji));
-      range.setStartAfter(range.commonAncestorContainer.lastChild);
-      range.collapse(true);
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
     this.editor.focus();
+
+    // Restore saved selection if available
+    if (this._savedRange) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(this._savedRange);
+      this._savedRange = null;
+    }
+
+    document.execCommand('insertText', false, emoji);
     this.saveState();
     this.triggerChange();
   }
@@ -908,7 +767,7 @@ class Editium {
       'code-block': { icon: '<i class="fa-solid fa-file-code"></i>', title: 'Code Block', action: () => this.insertCodeBlock() },
       'horizontal-rule': { icon: '<i class="fa-solid fa-minus"></i>', title: 'Horizontal Rule', action: () => this.execCommand('insertHorizontalRule') },
       'table': { icon: '<i class="fa-solid fa-table"></i>', title: 'Insert Table', action: () => this.showTableModal() },
-      'emoji': { icon: '😊', title: 'Emoji Picker', action: () => this.toggleEmojiPicker() },
+      'emoji': { icon: '<i class="fa-regular fa-face-smile"></i>', title: 'Emoji Picker', action: () => this.toggleEmojiPicker() },
       'text-color': { icon: '<i class="fa-solid fa-palette"></i>', title: 'Text Color', action: () => this.showColorPicker('foreColor') },
       'bg-color': { icon: '<i class="fa-solid fa-fill-drip"></i>', title: 'Background Color', action: () => this.showColorPicker('hiliteColor') },
       'undo': { icon: '<i class="fa-solid fa-rotate-left"></i>', title: 'Undo (Ctrl+Z)', action: () => this.undo() },
@@ -3045,8 +2904,16 @@ ${html}
     if (this.showWordCount) {
       const text = this.editor.textContent || '';
       const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
-      const chars = text.length;
-      const charsNoSpaces = text.replace(/\s/g, '').length;
+      // Use Intl.Segmenter for accurate grapheme count (emojis = 1 each), fallback to spread
+      let chars, charsNoSpaces;
+      if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        chars = [...segmenter.segment(text)].length;
+        charsNoSpaces = [...segmenter.segment(text.replace(/\s/g, ''))].length;
+      } else {
+        chars = [...text].length;
+        charsNoSpaces = [...text.replace(/\s/g, '')].length;
+      }
       
       statsHTML = `
         <div class="editium-word-count-stats">

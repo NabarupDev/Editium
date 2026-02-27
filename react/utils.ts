@@ -766,9 +766,18 @@ export const countWords = (text: string): number => {
 };
 
 export const countCharacters = (text: string): number => {
-  return text.length;
+  if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+    return Array.from(segmenter.segment(text)).length;
+  }
+  return Array.from(text).length;
 };
 
 export const countCharactersNoSpaces = (text: string): number => {
-  return text.replace(/\s/g, '').length;
+  const noSpaces = text.replace(/\s/g, '');
+  if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+    return Array.from(segmenter.segment(noSpaces)).length;
+  }
+  return Array.from(noSpaces).length;
 };

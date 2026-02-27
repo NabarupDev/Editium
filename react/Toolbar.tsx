@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSlate, ReactEditor } from 'slate-react';
 import { HistoryEditor } from 'slate-history';
 import { Editor, Transforms, Range } from 'slate';
-import EmojiPicker from 'emoji-picker-react';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 import {
   BoldIcon,
   ItalicIcon,
@@ -1678,7 +1678,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                   height={420}
                   width={350}
                   onEmojiClick={handleEmojiSelect}
-                  theme="light"
+                  theme={Theme.LIGHT}
                   searchDisabled={false}
                   previewConfig={{
                     showPreview: true

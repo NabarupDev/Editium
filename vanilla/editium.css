@@ -771,24 +771,24 @@ body.editium-fullscreen-active {
   }
 }
 /* Emoji Picker Styles */
-.editium-emoji-picker-container {
-  scrollbar-width: thin;
-  scrollbar-color: #ccc transparent;
+.editium-emoji-picker {
+  width: 350px;
+  height: 420px;
 }
 
-.editium-emoji-picker-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.editium-emoji-picker-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.editium-emoji-picker-container::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-
-.editium-emoji-picker-container::-webkit-scrollbar-thumb:hover {
-  background: #999;
+.editium-emoji-picker emoji-picker {
+  width: 100%;
+  height: 100%;
+  --border-color: #e0e0e0;
+  --border-radius: 8px;
+  --background: #fff;
+  --category-font-size: 1rem;
+  --emoji-size: 1.4rem;
+  --indicator-color: #007bff;
+  --input-border-color: #ddd;
+  --input-border-radius: 6px;
+  --input-font-size: 13px;
+  --input-padding: 8px 10px;
+  --num-columns: 8;
+  --outline-color: #007bff;
 }
