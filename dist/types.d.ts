@@ -2,7 +2,7 @@ import { BaseElement, BaseText } from 'slate';
 export type FormatType = 'bold' | 'italic' | 'underline' | 'code' | 'strikethrough' | 'superscript' | 'subscript';
 export type AlignmentType = 'left' | 'center' | 'right' | 'justify';
 export type BlockType = 'paragraph' | 'heading-one' | 'heading-two' | 'heading-three' | 'heading-four' | 'heading-five' | 'heading-six' | 'heading-seven' | 'heading-eight' | 'bulleted-list' | 'numbered-list' | 'list-item' | 'blockquote' | 'code-block' | 'horizontal-rule' | 'image' | 'table' | 'table-row' | 'table-cell';
-export type ToolbarItem = FormatType | BlockType | AlignmentType | 'link' | 'indent' | 'outdent' | 'undo' | 'redo' | 'separator' | 'view-output' | 'text-color' | 'bg-color' | 'table' | 'find-replace' | 'fullscreen' | 'import-docx' | 'export-docx' | 'export-pdf';
+export type ToolbarItem = FormatType | BlockType | AlignmentType | 'link' | 'indent' | 'outdent' | 'undo' | 'redo' | 'separator' | 'view-output' | 'text-color' | 'bg-color' | 'table' | 'find-replace' | 'fullscreen' | 'import-docx' | 'export-docx' | 'export-pdf' | 'emoji';
 export declare const ALL_TOOLBAR_ITEMS: ToolbarItem[];
 export interface CustomElement extends BaseElement {
     type: BlockType;

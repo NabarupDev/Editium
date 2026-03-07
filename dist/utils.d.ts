@@ -14,6 +14,7 @@ export declare const getActiveBackgroundColor: (editor: Editor) => string | null
 export declare const toggleBlock: (editor: Editor, format: BlockType) => void;
 export declare const insertHorizontalRule: (editor: Editor) => void;
 export declare const insertImage: (editor: Editor, url: string, alt?: string, width?: number) => void;
+export declare const insertEmoji: (editor: Editor, emoji: string) => void;
 export declare const isValidImageUrl: (url: string) => boolean;
 export declare const insertLink: (editor: Editor, url: string, title?: string, target?: "_blank" | "_self") => void;
 export declare const isLinkActive: (editor: Editor) => boolean;
