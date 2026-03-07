@@ -2150,7 +2150,7 @@ class Editium {
     const tab = '  ';
     let formattedHTML = '';
 
-    const rawTokens = html.split(/(<[^>]+>)/);
+    const rawTokens = html.split(/(<[^<>]+>)/);
 
     const tokens = [];
     for (let i = 0; i < rawTokens.length; i++) {

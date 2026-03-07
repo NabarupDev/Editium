@@ -616,7 +616,7 @@ const Editium: React.FC<EditiumProps> = ({
     let indent = 0;
     const tab = '  ';
     
-    html.split(/(<[^>]+>)/g).forEach(part => {
+    html.split(/(<[^<>]+>)/g).forEach(part => {
       if (part.trim() === '') return;
       
       if (part.startsWith('</')) {

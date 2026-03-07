@@ -786,7 +786,28 @@ body.editium-fullscreen-active {
     padding: 0;
   }
 }
-`;
+/* Emoji Picker Styles */
+.editium-emoji-picker {
+  width: 350px;
+  height: 420px;
+}
+
+.editium-emoji-picker emoji-picker {
+  width: 100%;
+  height: 100%;
+  --border-color: #e0e0e0;
+  --border-radius: 8px;
+  --background: #fff;
+  --category-font-size: 1rem;
+  --emoji-size: 1.4rem;
+  --indicator-color: #007bff;
+  --input-border-color: #ddd;
+  --input-border-radius: 6px;
+  --input-font-size: 13px;
+  --input-padding: 8px 10px;
+  --num-columns: 8;
+  --outline-color: #007bff;
+}`;
     document.head.appendChild(styleElement);
   }
 
@@ -822,6 +843,8 @@ body.editium-fullscreen-active {
       this.openDropdown = null;
       this.linkPopup = null;
       this.selectedLink = null;
+      this.showEmojiPicker = false;
+      this.emojiPickerElement = null;
       
       if (!this.container) {
         throw new Error('Container element is required');
@@ -903,6 +926,10 @@ body.editium-fullscreen-active {
         'separator',
         'link', 'image', 'table', 'horizontal-rule', 'undo', 'redo',
         'separator',
+        'import-docx', 'export-docx', 'export-pdf',
+        'separator',
+        'emoji',
+        'separator',
         'find-replace', 'fullscreen', 'view-output'
       ];
     }
@@ -920,6 +947,7 @@ body.editium-fullscreen-active {
         lists: ['bulleted-list', 'numbered-list', 'indent', 'outdent'],
         insert: ['link', 'image', 'table', 'horizontal-rule'],
         edit: ['undo', 'redo'],
+        file: ['import-docx', 'export-docx', 'export-pdf'],
         view: ['preview', 'view-html', 'view-json']
       };
       
@@ -932,8 +960,18 @@ body.editium-fullscreen-active {
         toolbar.appendChild(this.createGroupDropdown('Lists', groups.lists));
         toolbar.appendChild(this.createGroupDropdown('Insert', groups.insert));
         toolbar.appendChild(this.createGroupDropdown('Edit', groups.edit));
+        toolbar.appendChild(this.createGroupDropdown('File', groups.file));
         toolbar.appendChild(this.createGroupDropdown('View', groups.view));
         
+        const emojiWrapper = document.createElement('div');
+        emojiWrapper.style.cssText = 'position: relative; display: inline-block;';
+        const emojiButton = this.createToolbarButton('emoji');
+        if (emojiButton) {
+          emojiWrapper.appendChild(emojiButton);
+          toolbar.appendChild(emojiWrapper);
+          this._emojiWrapper = emojiWrapper;
+        }
+  
         const spacer = document.createElement('div');
         spacer.style.flex = '1';
         toolbar.appendChild(spacer);
@@ -945,7 +983,8 @@ body.editium-fullscreen-active {
       } else {
         const blockFormats = groups.paragraph;
         const alignments = groups.align;
-        let processedGroups = { block: false, align: false };
+        const fileItems = groups.file;
+        let processedGroups = { block: false, align: false, file: false };
         
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
@@ -962,7 +1001,10 @@ body.editium-fullscreen-active {
           } else if (alignments.includes(item) && !processedGroups.align) {
             toolbar.appendChild(this.createAlignmentDropdown());
             processedGroups.align = true;
-          } else if (!blockFormats.includes(item) && !alignments.includes(item)) {
+          } else if (fileItems.includes(item) && !processedGroups.file) {
+            toolbar.appendChild(this.createGroupDropdown('File', groups.file));
+            processedGroups.file = true;
+          } else if (!blockFormats.includes(item) && !alignments.includes(item) && !fileItems.includes(item)) {
             const button = this.createToolbarButton(item);
             if (button) {
               toolbar.appendChild(button);
@@ -978,34 +1020,58 @@ body.editium-fullscreen-active {
       const dropdown = document.createElement('div');
       dropdown.className = 'editium-dropdown';
       
+      const menuId = `editium-menu-${Math.random().toString(36).substr(2, 9)}`;
+      
       const trigger = document.createElement('button');
       trigger.className = 'editium-toolbar-button editium-dropdown-trigger';
       trigger.type = 'button';
       trigger.textContent = label;
       trigger.title = label;
       
+      // ARIA attributes for accessibility
+      trigger.setAttribute('aria-haspopup', 'menu');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.setAttribute('aria-controls', menuId);
+      
       const menu = document.createElement('div');
       menu.className = 'editium-dropdown-menu';
+      menu.id = menuId;
+      menu.setAttribute('role', 'menu');
+      menu.setAttribute('aria-orientation', 'vertical');
+      menu.setAttribute('aria-hidden', 'true');
       
-      items.forEach(itemType => {
+      items.forEach((itemType, index) => {
         const config = this.getButtonConfig(itemType);
         if (!config) return;
         
         const item = document.createElement('button');
         item.type = 'button';
         item.innerHTML = `${config.icon} <span>${config.title}</span>`;
+        item.setAttribute('role', 'menuitem');
+        item.setAttribute('tabindex', index === 0 ? '0' : '-1');
+        
         item.onclick = (e) => {
           e.preventDefault();
           config.action();
           this.closeDropdown();
+          this.focusEditor();
         };
+        
         menu.appendChild(item);
       });
       
+      // Add keyboard navigation to trigger
       trigger.onclick = (e) => {
         e.preventDefault();
-        this.toggleDropdown(menu);
+        this.toggleDropdown(menu, trigger);
       };
+      
+      trigger.onkeydown = (e) => {
+        this.handleDropdownTriggerKeyDown(e, menu, trigger);
+      };
+      
+      // Add keyboard navigation to menu
+      this.addMenuKeyboardNavigation(menu, trigger);
       
       dropdown.appendChild(trigger);
       dropdown.appendChild(menu);
@@ -1017,14 +1083,25 @@ body.editium-fullscreen-active {
       const dropdown = document.createElement('div');
       dropdown.className = 'editium-dropdown';
       
+      const menuId = `editium-menu-${Math.random().toString(36).substr(2, 9)}`;
+      
       const trigger = document.createElement('button');
       trigger.className = 'editium-toolbar-button editium-dropdown-trigger';
       trigger.type = 'button';
       trigger.textContent = 'Paragraph';
       trigger.title = 'Block Format';
       
+      // ARIA attributes for accessibility
+      trigger.setAttribute('aria-haspopup', 'menu');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.setAttribute('aria-controls', menuId);
+      
       const menu = document.createElement('div');
       menu.className = 'editium-dropdown-menu';
+      menu.id = menuId;
+      menu.setAttribute('role', 'menu');
+      menu.setAttribute('aria-orientation', 'vertical');
+      menu.setAttribute('aria-hidden', 'true');
       
       const formats = [
         { label: 'Paragraph', value: 'p' },
@@ -1036,23 +1113,35 @@ body.editium-fullscreen-active {
         { label: 'Heading 6', value: 'h6' },
       ];
       
-      formats.forEach(format => {
+      formats.forEach((format, index) => {
         const item = document.createElement('button');
         item.type = 'button';
         item.textContent = format.label;
+        item.setAttribute('role', 'menuitem');
+        item.setAttribute('tabindex', index === 0 ? '0' : '-1');
+        
         item.onclick = (e) => {
           e.preventDefault();
           this.execCommand('formatBlock', `<${format.value}>`);
           trigger.textContent = format.label;
           this.closeDropdown();
+          this.focusEditor();
         };
+        
         menu.appendChild(item);
       });
       
       trigger.onclick = (e) => {
         e.preventDefault();
-        this.toggleDropdown(menu);
+        this.toggleDropdown(menu, trigger);
       };
+      
+      trigger.onkeydown = (e) => {
+        this.handleDropdownTriggerKeyDown(e, menu, trigger);
+      };
+      
+      // Add keyboard navigation to menu
+      this.addMenuKeyboardNavigation(menu, trigger);
       
       dropdown.appendChild(trigger);
       dropdown.appendChild(menu);
@@ -1064,14 +1153,25 @@ body.editium-fullscreen-active {
       const dropdown = document.createElement('div');
       dropdown.className = 'editium-dropdown';
       
+      const menuId = `editium-menu-${Math.random().toString(36).substr(2, 9)}`;
+      
       const trigger = document.createElement('button');
       trigger.className = 'editium-toolbar-button editium-dropdown-trigger';
       trigger.type = 'button';
       trigger.textContent = 'Align';
       trigger.title = 'Text Alignment';
       
+      // ARIA attributes for accessibility
+      trigger.setAttribute('aria-haspopup', 'menu');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.setAttribute('aria-controls', menuId);
+      
       const menu = document.createElement('div');
       menu.className = 'editium-dropdown-menu';
+      menu.id = menuId;
+      menu.setAttribute('role', 'menu');
+      menu.setAttribute('aria-orientation', 'vertical');
+      menu.setAttribute('aria-hidden', 'true');
       
       const alignments = [
         { label: 'Align Left', icon: '<i class="fa-solid fa-align-left"></i>', command: 'justifyLeft' },
@@ -1080,22 +1180,34 @@ body.editium-fullscreen-active {
         { label: 'Justify', icon: '<i class="fa-solid fa-align-justify"></i>', command: 'justifyFull' },
       ];
       
-      alignments.forEach(align => {
+      alignments.forEach((align, index) => {
         const item = document.createElement('button');
         item.type = 'button';
         item.innerHTML = `${align.icon} <span>${align.label}</span>`;
+        item.setAttribute('role', 'menuitem');
+        item.setAttribute('tabindex', index === 0 ? '0' : '-1');
+        
         item.onclick = (e) => {
           e.preventDefault();
           this.execCommand(align.command);
           this.closeDropdown();
+          this.focusEditor();
         };
+        
         menu.appendChild(item);
       });
       
       trigger.onclick = (e) => {
         e.preventDefault();
-        this.toggleDropdown(menu);
+        this.toggleDropdown(menu, trigger);
       };
+      
+      trigger.onkeydown = (e) => {
+        this.handleDropdownTriggerKeyDown(e, menu, trigger);
+      };
+      
+      // Add keyboard navigation to menu
+      this.addMenuKeyboardNavigation(menu, trigger);
       
       dropdown.appendChild(trigger);
       dropdown.appendChild(menu);
@@ -1103,21 +1215,269 @@ body.editium-fullscreen-active {
       return dropdown;
     }
     
-    toggleDropdown(menu) {
+    toggleDropdown(menu, trigger) {
       if (this.openDropdown === menu) {
         this.closeDropdown();
       } else {
         this.closeDropdown();
         menu.classList.add('show');
         this.openDropdown = menu;
+        this.currentDropdownTrigger = trigger;
+        
+        // Update ARIA attributes
+        if (trigger) {
+          trigger.setAttribute('aria-expanded', 'true');
+        }
+        menu.setAttribute('aria-hidden', 'false');
+        
+        // Focus first menu item
+        const firstItem = menu.querySelector('[role="menuitem"]');
+        if (firstItem) {
+          setTimeout(() => firstItem.focus(), 0);
+        }
       }
     }
     
     closeDropdown() {
       if (this.openDropdown) {
         this.openDropdown.classList.remove('show');
+        
+        // Update ARIA attributes
+        if (this.currentDropdownTrigger) {
+          this.currentDropdownTrigger.setAttribute('aria-expanded', 'false');
+        }
+        this.openDropdown.setAttribute('aria-hidden', 'true');
+        
         this.openDropdown = null;
+        this.currentDropdownTrigger = null;
       }
+    }
+    
+    // New method to handle keyboard navigation on dropdown triggers
+    handleDropdownTriggerKeyDown(event, menu, trigger) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        this.toggleDropdown(menu, trigger);
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        this.toggleDropdown(menu, trigger);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        this.closeDropdown();
+        trigger.focus();
+      }
+    }
+    
+    // New method to add keyboard navigation to menu items
+    addMenuKeyboardNavigation(menu, trigger) {
+      menu.addEventListener('keydown', (e) => {
+        const items = Array.from(menu.querySelectorAll('[role="menuitem"]'));
+        const currentIndex = items.indexOf(document.activeElement);
+        
+        switch(e.key) {
+          case 'ArrowDown':
+            e.preventDefault();
+            if (currentIndex < items.length - 1) {
+              items[currentIndex + 1].focus();
+              this.updateMenuItemTabIndex(items, currentIndex + 1);
+            }
+            break;
+            
+          case 'ArrowUp':
+            e.preventDefault();
+            if (currentIndex > 0) {
+              items[currentIndex - 1].focus();
+              this.updateMenuItemTabIndex(items, currentIndex - 1);
+            }
+            break;
+            
+          case 'Home':
+            e.preventDefault();
+            items[0].focus();
+            this.updateMenuItemTabIndex(items, 0);
+            break;
+            
+          case 'End':
+            e.preventDefault();
+            items[items.length - 1].focus();
+            this.updateMenuItemTabIndex(items, items.length - 1);
+            break;
+            
+          case 'Escape':
+            e.preventDefault();
+            this.closeDropdown();
+            if (trigger) {
+              trigger.focus();
+            }
+            break;
+            
+          case 'Enter':
+          case ' ':
+            e.preventDefault();
+            if (document.activeElement && document.activeElement.hasAttribute('role')) {
+              document.activeElement.click();
+            }
+            break;
+            
+          case 'Tab':
+            e.preventDefault();
+            this.closeDropdown();
+            if (trigger) {
+              trigger.focus();
+            }
+            break;
+        }
+      });
+    }
+    
+    // Update tabindex for roving tabindex pattern
+    updateMenuItemTabIndex(items, focusedIndex) {
+      items.forEach((item, index) => {
+        item.setAttribute('tabindex', index === focusedIndex ? '0' : '-1');
+      });
+    }
+    
+    // New method to focus the editor
+    focusEditor() {
+      setTimeout(() => {
+        if (this.editor) {
+          this.editor.focus();
+        }
+      }, 0);
+    }
+  
+    toggleEmojiPicker() {
+      this.showEmojiPicker = !this.showEmojiPicker;
+      if (this.showEmojiPicker) {
+        this.createAndShowEmojiPicker();
+      } else {
+        this.closeEmojiPicker();
+      }
+    }
+  
+    closeEmojiPicker() {
+      if (this._emojiBackdrop && this._emojiBackdrop.parentNode) {
+        this._emojiBackdrop.parentNode.removeChild(this._emojiBackdrop);
+      }
+      this._emojiBackdrop = null;
+      if (this.emojiPickerElement && this.emojiPickerElement.parentNode) {
+        this.emojiPickerElement.parentNode.removeChild(this.emojiPickerElement);
+      }
+      this.emojiPickerElement = null;
+      this.showEmojiPicker = false;
+  
+      // Remove reposition listeners
+      if (this._emojiRepositionHandler) {
+        window.removeEventListener('scroll', this._emojiRepositionHandler, true);
+        window.removeEventListener('resize', this._emojiRepositionHandler);
+        this._emojiRepositionHandler = null;
+      }
+    }
+  
+    _loadEmojiPickerScript() {
+      return new Promise((resolve) => {
+        if (customElements.get('emoji-picker')) {
+          resolve();
+          return;
+        }
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = 'https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js';
+        script.onload = () => resolve();
+        script.onerror = () => resolve(); // fail silently
+        document.head.appendChild(script);
+      });
+    }
+  
+    async createAndShowEmojiPicker() {
+      if (this.emojiPickerElement) {
+        this.closeEmojiPicker();
+        return;
+      }
+  
+      // Save current selection so we can restore it when inserting emoji
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        this._savedRange = sel.getRangeAt(0).cloneRange();
+      }
+  
+      // Load the web component if not already loaded
+      await this._loadEmojiPickerScript();
+  
+      // Container for the picker
+      const container = document.createElement('div');
+      container.className = 'editium-emoji-picker';
+      container.style.cssText = `
+        position: fixed;
+        z-index: 10000;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background: #fff;
+        overflow: hidden;
+      `;
+  
+      // Create the emoji-picker web component
+      const picker = document.createElement('emoji-picker');
+      picker.classList.add('light');
+      container.appendChild(picker);
+  
+      // Listen for emoji selection
+      picker.addEventListener('emoji-click', (event) => {
+        this.insertEmoji(event.detail.unicode);
+        this.closeEmojiPicker();
+      });
+  
+      // Find the emoji button to anchor positioning
+      const emojiButton = this._emojiWrapper
+        ? this._emojiWrapper.querySelector('[data-command="emoji"]')
+        : null;
+  
+      // Position helper: keeps the picker anchored below the button
+      const positionPicker = () => {
+        if (!emojiButton) return;
+        const btnRect = emojiButton.getBoundingClientRect();
+        container.style.top = (btnRect.bottom + 8) + 'px';
+        let left = btnRect.right - 350;
+        if (left < 8) left = 8;
+        container.style.left = left + 'px';
+      };
+      positionPicker();
+  
+      // Backdrop to close on outside click
+      const backdrop = document.createElement('div');
+      backdrop.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 9999;
+      `;
+      backdrop.onclick = () => this.closeEmojiPicker();
+  
+      document.body.appendChild(backdrop);
+      document.body.appendChild(container);
+  
+      this._emojiBackdrop = backdrop;
+      this.emojiPickerElement = container;
+  
+      // Re-position on scroll/resize so picker follows the button
+      this._emojiRepositionHandler = () => positionPicker();
+      window.addEventListener('scroll', this._emojiRepositionHandler, true);
+      window.addEventListener('resize', this._emojiRepositionHandler);
+    }
+  
+    insertEmoji(emoji) {
+      this.editor.focus();
+  
+      // Restore saved selection if available
+      if (this._savedRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(this._savedRange);
+        this._savedRange = null;
+      }
+  
+      document.execCommand('insertText', false, emoji);
+      this.saveState();
+      this.triggerChange();
     }
     
     createToolbarButton(type) {
@@ -1148,31 +1508,54 @@ body.editium-fullscreen-active {
       const dropdown = document.createElement('div');
       dropdown.className = 'editium-dropdown';
       
+      const menuId = `editium-menu-${Math.random().toString(36).substr(2, 9)}`;
+      
       const trigger = document.createElement('button');
       trigger.className = 'editium-toolbar-button editium-dropdown-trigger';
       trigger.type = 'button';
       trigger.innerHTML = config.icon;
       trigger.title = config.title;
       
+      // ARIA attributes for accessibility
+      trigger.setAttribute('aria-haspopup', 'menu');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.setAttribute('aria-controls', menuId);
+      
       const menu = document.createElement('div');
       menu.className = 'editium-dropdown-menu';
+      menu.id = menuId;
+      menu.setAttribute('role', 'menu');
+      menu.setAttribute('aria-orientation', 'vertical');
+      menu.setAttribute('aria-hidden', 'true');
       
-      config.dropdown.forEach(item => {
+      config.dropdown.forEach((item, index) => {
         const menuItem = document.createElement('button');
         menuItem.type = 'button';
         menuItem.textContent = item.label;
+        menuItem.setAttribute('role', 'menuitem');
+        menuItem.setAttribute('tabindex', index === 0 ? '0' : '-1');
+        
         menuItem.onclick = (e) => {
           e.preventDefault();
           item.action();
           this.closeDropdown();
+          this.focusEditor();
         };
+        
         menu.appendChild(menuItem);
       });
       
       trigger.onclick = (e) => {
         e.preventDefault();
-        this.toggleDropdown(menu);
+        this.toggleDropdown(menu, trigger);
       };
+      
+      trigger.onkeydown = (e) => {
+        this.handleDropdownTriggerKeyDown(e, menu, trigger);
+      };
+      
+      // Add keyboard navigation to menu
+      this.addMenuKeyboardNavigation(menu, trigger);
       
       dropdown.appendChild(trigger);
       dropdown.appendChild(menu);
@@ -1203,6 +1586,7 @@ body.editium-fullscreen-active {
         'code-block': { icon: '<i class="fa-solid fa-file-code"></i>', title: 'Code Block', action: () => this.insertCodeBlock() },
         'horizontal-rule': { icon: '<i class="fa-solid fa-minus"></i>', title: 'Horizontal Rule', action: () => this.execCommand('insertHorizontalRule') },
         'table': { icon: '<i class="fa-solid fa-table"></i>', title: 'Insert Table', action: () => this.showTableModal() },
+        'emoji': { icon: '<i class="fa-regular fa-face-smile"></i>', title: 'Emoji Picker', action: () => this.toggleEmojiPicker() },
         'text-color': { icon: '<i class="fa-solid fa-palette"></i>', title: 'Text Color', action: () => this.showColorPicker('foreColor') },
         'bg-color': { icon: '<i class="fa-solid fa-fill-drip"></i>', title: 'Background Color', action: () => this.showColorPicker('hiliteColor') },
         'undo': { icon: '<i class="fa-solid fa-rotate-left"></i>', title: 'Undo (Ctrl+Z)', action: () => this.undo() },
@@ -1211,7 +1595,10 @@ body.editium-fullscreen-active {
         'view-html': { icon: '<i class="fa-solid fa-code"></i>', title: 'View HTML', action: () => this.viewOutput('html') },
         'view-json': { icon: '<i class="fa-solid fa-brackets-curly"></i>', title: 'View JSON', action: () => this.viewOutput('json') },
         'find-replace': { icon: '<i class="fa-solid fa-magnifying-glass"></i>', title: 'Find & Replace', action: () => this.toggleFindReplace() },
-        'fullscreen': { icon: '<i class="fa-solid fa-expand"></i>', title: 'Toggle Fullscreen (F11)', action: () => this.toggleFullscreen() }
+        'fullscreen': { icon: '<i class="fa-solid fa-expand"></i>', title: 'Toggle Fullscreen (F11)', action: () => this.toggleFullscreen() },
+        'import-docx': { icon: '<i class="fa-solid fa-arrow-up-from-bracket"></i>', title: 'Import Word (.docx)', action: () => this.importDocx() },
+        'export-docx': { icon: '<i class="fa-solid fa-arrow-down-to-bracket"></i>', title: 'Export to Word (.docx)', action: () => this.exportDocx() },
+        'export-pdf': { icon: '<i class="fa-solid fa-download"></i>', title: 'Export to PDF', action: () => this.exportPdf() }
       };
       
       return configs[type];
@@ -1493,9 +1880,16 @@ body.editium-fullscreen-active {
         }
         
         try {
-          new URL(url);
+          var parsedUrl = new URL(url, window.location.origin);
         } catch {
           alert('Please enter a valid URL');
+          return false;
+        }
+  
+        // Only allow http, https, and mailto schemes for safety
+        const allowedSchemes = ['http:', 'https:', 'mailto:'];
+        if (!allowedSchemes.includes(parsedUrl.protocol)) {
+          alert('Only http, https, and mailto links are allowed for security reasons.');
           return false;
         }
   
@@ -2575,7 +2969,7 @@ body.editium-fullscreen-active {
       const tab = '  ';
       let formattedHTML = '';
   
-      const rawTokens = html.split(/(<[^>]+>)/);
+      const rawTokens = html.split(/(<[^<>]+>)/);
   
       const tokens = [];
       for (let i = 0; i < rawTokens.length; i++) {
@@ -2712,6 +3106,449 @@ body.editium-fullscreen-active {
       return div.innerHTML;
     }
     
+    importDocx() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      input.onchange = async (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          try {
+            // Validate file type
+            if (!file.name.endsWith('.docx')) {
+              throw new Error('Please select a valid .docx file');
+            }
+            
+            // Show loading notification
+            this.showNotification('Importing document...', 'info');
+            
+            // Dynamically import mammoth
+            const mammoth = await this.loadMammoth();
+            
+            if (!mammoth) {
+              throw new Error('Mammoth library failed to load properly');
+            }
+            
+            // Try reading with Blob first (more direct approach)
+            let result;
+            try {
+              // Use blob approach - Mammoth natively supports this
+              result = await mammoth.convertToHtml({ blob: file });
+            } catch (blobError) {
+              console.warn('Blob approach failed, trying ArrayBuffer:', blobError);
+              // Fallback to ArrayBuffer
+              const arrayBuffer = await this.readFileAsUint8Array(file);
+              
+              if (!arrayBuffer || arrayBuffer.length === 0) {
+                throw new Error('File is empty or could not be read');
+              }
+              
+              result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+            }
+            
+            if (!result || !result.value) {
+              throw new Error('Could not convert document to HTML');
+            }
+            
+            const html = result.value;
+            
+            // Append imported content to existing content
+            if (html && html.trim()) {
+              this.editor.innerHTML += html;
+              this.saveState();
+              this.triggerChange();
+              this.updateWordCount();
+              this.showNotification(`Successfully imported ${file.name}`, 'success');
+            } else {
+              this.showNotification(`Document is empty or could not be imported`, 'error');
+            }
+          } catch (error) {
+            console.error('Error importing .docx file:', error);
+            this.showNotification(`Failed to import: ${error.message || 'Unknown error'}`, 'error');
+          }
+        }
+      };
+      input.click();
+    }
+    
+    readFileAsUint8Array(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+          try {
+            const arrayBuffer = event.target?.result;
+            if (!(arrayBuffer instanceof ArrayBuffer)) {
+              throw new Error('Failed to read file as ArrayBuffer');
+            }
+            
+            // Convert ArrayBuffer to Uint8Array for better compatibility
+            const uint8Array = new Uint8Array(arrayBuffer);
+            
+            if (uint8Array.length === 0) {
+              throw new Error('File is empty');
+            }
+            
+            resolve(uint8Array);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        
+        reader.onerror = (error) => {
+          reject(new Error('File read error: ' + (error.message || 'Unknown error')));
+        };
+        
+        reader.onabort = () => {
+          reject(new Error('File read was aborted'));
+        };
+        
+        try {
+          reader.readAsArrayBuffer(file);
+        } catch (error) {
+          reject(new Error('Failed to initiate file read: ' + error.message));
+        }
+      });
+    }
+    
+    async loadMammoth() {
+      if (window.mammoth && window.mammoth.convertToHtml) {
+        return window.mammoth;
+      }
+      
+      return new Promise((resolve, reject) => {
+        // Create script element
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+        script.async = true;
+        
+        // Set up timeout
+        const timeout = setTimeout(() => {
+          reject(new Error('Timeout: Mammoth library took too long to load (15s)'));
+        }, 15000);
+        
+        // Handle successful load
+        script.onload = () => {
+          clearTimeout(timeout);
+          
+          // Wait a bit for library to fully initialize
+          setTimeout(() => {
+            if (window.mammoth && typeof window.mammoth.convertToHtml === 'function') {
+              resolve(window.mammoth);
+            } else {
+              reject(new Error('Mammoth library loaded but convertToHtml method not found'));
+            }
+          }, 100);
+        };
+        
+        // Handle load error
+        script.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error('Failed to load Mammoth library from CDN. Check your internet connection.'));
+        };
+        
+        // Start loading
+        document.head.appendChild(script);
+      });
+    }
+    
+    exportDocx() {
+      try {
+        const html = this.getHTML();
+        if (!html || html.trim() === '') {
+          this.showNotification('No content to export', 'error');
+          return;
+        }
+        
+        // Create a proper docx-like file with HTML content
+        // Note: This creates an HTML file with .docx extension that opens in Word
+        const htmlContent = `
+  <?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html>
+  <head>
+  <meta charset="UTF-8" />
+  <title>Document</title>
+  <style>
+  body { font-family: 'Calibri', 'Arial', sans-serif; margin: 20px; line-height: 1.6; color: #000; }
+  h1 { font-size: 28pt; margin: 12px 0 6px 0; font-weight: bold; }
+  h2 { font-size: 24pt; margin: 12px 0 6px 0; font-weight: bold; }
+  h3 { font-size: 20pt; margin: 12px 0 6px 0; font-weight: bold; }
+  h4 { font-size: 16pt; margin: 12px 0 6px 0; font-weight: bold; }
+  h5 { font-size: 13pt; margin: 12px 0 6px 0; font-weight: bold; }
+  h6 { font-size: 11pt; margin: 12px 0 6px 0; font-weight: bold; }
+  p { margin: 0 0 10px 0; }
+  ul, ol { margin: 10px 0 10px 40px; }
+  li { margin: 5px 0; }
+  blockquote { margin: 10px 0; padding: 10px 20px; border-left: 4px solid #ccc; background: #f9f9f9; }
+  pre { background: #f4f4f4; padding: 12px; border-radius: 3px; overflow-x: auto; font-family: 'Courier New', monospace; }
+  code { background: #f4f4f4; padding: 2px 4px; border-radius: 2px; font-family: 'Courier New', monospace; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  table, th, td { border: 1px solid #999; }
+  th, td { padding: 8px; text-align: left; }
+  th { background: #f0f0f0; font-weight: bold; }
+  strong, b { font-weight: bold; }
+  em, i { font-style: italic; }
+  u { text-decoration: underline; }
+  s, del { text-decoration: line-through; }
+  hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+  </style>
+  </head>
+  <body>
+  ${html}
+  </body>
+  </html>
+        `;
+        
+        // Create a blob and download
+        const blob = new Blob([htmlContent], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'document.docx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        this.showNotification('Document exported successfully', 'success');
+      } catch (error) {
+        console.error('Error exporting to .docx:', error);
+        this.showNotification(`Failed to export document: ${error.message}`, 'error');
+      }
+    }
+    
+    exportPdf() {
+      try {
+        const html = this.getHTML();
+        if (!html || html.trim() === '') {
+          this.showNotification('No content to export', 'error');
+          return;
+        }
+        
+        // Show loading notification
+        this.showNotification('Loading PDF libraries...', 'info');
+        
+        // Use async wrapper to handle promises properly
+        this.loadPdfLibrariesAndExport(html).catch(error => {
+          console.error('PDF Export Error:', error);
+          this.showNotification(`PDF export failed: ${error.message || 'Unknown error'}`, 'error');
+        });
+        
+      } catch (error) {
+        console.error('Error starting PDF export:', error);
+        this.showNotification('Failed to start PDF export', 'error');
+      }
+    }
+    
+    async loadPdfLibrariesAndExport(html) {
+      try {
+        // Load libraries
+        await this.loadPdfLibraries();
+        
+        // Check if libraries are available
+        if (!window.html2canvas) {
+          throw new Error('html2canvas library failed to load');
+        }
+        
+        if (!window.jsPDF) {
+          throw new Error('jsPDF library failed to load');
+        }
+        
+        const html2canvas = window.html2canvas;
+        const jsPDF = window.jsPDF;
+        
+        // Create temporary element with content
+        const element = document.createElement('div');
+        element.innerHTML = html;
+        element.style.padding = '20px';
+        element.style.backgroundColor = 'white';
+        element.style.fontFamily = 'Arial, sans-serif';
+        element.style.lineHeight = '1.6';
+        element.style.color = '#333';
+        element.style.maxWidth = '100%';
+        element.style.fontSize = '14px';
+        
+        // Temporarily add to DOM for rendering
+        element.style.position = 'fixed';
+        element.style.left = '-9999px';
+        element.style.top = '-9999px';
+        element.style.width = '800px';
+        document.body.appendChild(element);
+        
+        try {
+          // Convert to canvas
+          const canvas = await html2canvas(element, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            logging: false,
+            useCORS: true,
+            allowTaint: true,
+            windowHeight: element.scrollHeight,
+            windowWidth: element.scrollWidth
+          });
+          
+          // Remove temporary element
+          if (element.parentNode) {
+            document.body.removeChild(element);
+          }
+          
+          // Create PDF
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4',
+            compress: true
+          });
+          
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          const margin = 10;
+          const imgWidth = pageWidth - (margin * 2);
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          
+          let heightLeft = imgHeight;
+          let position = margin;
+          
+          // Add first page
+          pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+          heightLeft -= (pageHeight - (margin * 2));
+          
+          // Add subsequent pages if needed
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight + margin;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - (margin * 2));
+          }
+          
+          pdf.save('document.pdf');
+          this.showNotification('PDF exported successfully', 'success');
+        } catch (canvasError) {
+          // Clean up if error occurs
+          if (element.parentNode) {
+            document.body.removeChild(element);
+          }
+          console.error('Canvas/PDF generation error:', canvasError);
+          throw new Error('Failed to generate PDF: ' + canvasError.message);
+        }
+      } catch (error) {
+        console.error('Error in PDF export:', error);
+        throw error;
+      }
+    }
+    
+    async loadPdfLibraries() {
+      try {
+        // Load html2canvas
+        if (!window.html2canvas) {
+          await this.loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', 'html2canvas');
+        }
+        
+        // Load jsPDF - try unpkg CDN first
+        if (!window.jsPDF) {
+          await this.loadScript('https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js', 'jsPDF');
+        }
+        
+        // If still not loaded, try alternative CDN
+        if (!window.html2canvas || !window.jsPDF) {
+          throw new Error('PDF libraries did not load properly');
+        }
+      } catch (error) {
+        console.error('Error loading PDF libraries:', error);
+        throw error;
+      }
+    }
+    
+    loadScript(src, globalName) {
+      return new Promise((resolve, reject) => {
+        // Check if already loaded
+        if (window[globalName]) {
+          resolve();
+          return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.defer = false;
+        
+        // Add a timeout to catch hung requests
+        const timeout = setTimeout(() => {
+          reject(new Error(`Timeout loading ${globalName} from ${src}`));
+        }, 15000);
+        
+        script.onload = () => {
+          clearTimeout(timeout);
+          
+          // Wait a bit for the library to initialize
+          setTimeout(() => {
+            if (window[globalName]) {
+              resolve();
+            } else {
+              reject(new Error(`${globalName} not found on window after loading`));
+            }
+          }, 100);
+        };
+        
+        script.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error(`Failed to load script: ${src}`));
+        };
+        
+        document.head.appendChild(script);
+      });
+    }
+    
+    showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      const bgColor = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff';
+      
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: ${bgColor};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 10001;
+        animation: slideInUp 0.3s ease-out;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      `;
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      // Add animation
+      const style = document.createElement('style');
+      if (!document.getElementById('editium-notification-styles')) {
+        style.id = 'editium-notification-styles';
+        style.textContent = `
+          @keyframes slideInUp {
+            from {
+              transform: translateY(100px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideInUp 0.3s ease-out reverse';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+  
+    
     saveState() {
       const state = this.editor.innerHTML;
       
@@ -2799,6 +3636,9 @@ body.editium-fullscreen-active {
   
           e.preventDefault();
           this.closeLinkPopup();
+        } else if (e.key === 'Escape' && this.showEmojiPicker) {
+          e.preventDefault();
+          this.closeEmojiPicker();
         }
       });
       
@@ -2883,8 +3723,16 @@ body.editium-fullscreen-active {
       if (this.showWordCount) {
         const text = this.editor.textContent || '';
         const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
-        const chars = text.length;
-        const charsNoSpaces = text.replace(/\s/g, '').length;
+        // Use Intl.Segmenter for accurate grapheme count (emojis = 1 each), fallback to spread
+        let chars, charsNoSpaces;
+        if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+          const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+          chars = [...segmenter.segment(text)].length;
+          charsNoSpaces = [...segmenter.segment(text.replace(/\s/g, ''))].length;
+        } else {
+          chars = [...text].length;
+          charsNoSpaces = [...text.replace(/\s/g, '')].length;
+        }
         
         statsHTML = `
           <div class="editium-word-count-stats">

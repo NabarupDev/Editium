@@ -1,8 +1,7 @@
 {
   "name": "editium-vanilla",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Editium - Vanilla JavaScript Rich Text Editor (part of editium package)",
-  "private": true,
   "main": "editium.bundle.js",
   "files": [
     "editium.js",
@@ -26,5 +25,14 @@
     "javascript"
   ],
   "author": "Nabarup",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NabarupDev/Editium.git",
+    "directory": "vanilla"
+  },
+  "bugs": {
+    "url": "https://github.com/NabarupDev/Editium/issues"
+  },
+  "homepage": "https://github.com/NabarupDev/Editium/tree/main/vanilla#readme"
 }
