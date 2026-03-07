@@ -1,3 +1,6 @@
+# REQUIRED: NPM_TOKEN secret configured in GitHub Settings > Secrets
+# Setup: https://docs.npmjs.com/creating-and-viewing-access-tokens
+
 name: Manual Publish to npm
 
 on:
@@ -42,6 +45,7 @@ jobs:
         run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
       
       - name: Publish to npm
+        # NPM_TOKEN: Must be manually configured in repository secrets
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

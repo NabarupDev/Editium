@@ -43,6 +43,7 @@ jobs:
         with:
           files: ./coverage/coverage-final.json
           fail_ci_if_error: false
+        continue-on-error: true
 
   coverage:
     name: Code Coverage
@@ -64,8 +65,10 @@ jobs:
         run: npm run test:coverage
       
       - name: Upload coverage to Codecov
+        # Optional: CODECOV_TOKEN only needed for private repos
+        # Public repos can upload without authentication
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-          verbose: true
+          verbose: false
+        continue-on-error: true
