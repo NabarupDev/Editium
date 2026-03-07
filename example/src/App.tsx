@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Editium } from 'editium';
+import { Editium } from '../../react';
 import Installation from './Installation';
 import Footer from './Footer';
 
