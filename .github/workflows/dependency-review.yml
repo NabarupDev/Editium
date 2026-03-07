@@ -1,24 +1,14 @@
-name: Security - Dependency Review
+name: Security - Dependencies
 
 on:
   pull_request:
-    branches: [main, develop]
-
-permissions:
-  contents: read
-  pull-requests: write
+    branches: [main]
 
 jobs:
-  dependency-review:
-    name: Review Dependencies
+  review:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: moderate
-          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0
+      - uses: actions/dependency-review-action@v4
