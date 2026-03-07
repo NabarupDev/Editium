@@ -13,6 +13,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, '../src')
     }
   },
+  optimizeDeps: {
+    include: ['@heroicons/react/24/outline']
+  },
   build: {
     rollupOptions: {
       external: ['slate', 'slate-react', 'slate-history']
