@@ -1,4 +1,4 @@
-name: CodeQL Analysis
+name: Security - CodeQL Analysis
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main, develop]
   schedule:
-    - cron: '0 0 * * 1' # Weekly on Mondays
+    - cron: '0 0 * * 1' # Weekly on Mondays at UTC
 
 permissions:
   actions: read
@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['javascript']
+        language: ['javascript', 'typescript']
     
     steps:
       - name: Checkout code
