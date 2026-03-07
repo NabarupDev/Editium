@@ -1,6 +1,0 @@
-{
-  "buildCommand": "npm install --prefix example && npm run --prefix example build",
-  "outputDirectory": "example/dist"
-}
-
-
